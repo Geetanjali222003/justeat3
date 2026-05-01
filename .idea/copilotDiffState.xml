@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="/AuthController (snapshot).java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/AuthController (snapshot).java" />
+              <option name="originalContent" value="package com.example.JustEat.controller;&#10;&#10;import com.example.JustEat.dto.response.AuthResponse;&#10;import com.example.JustEat.dto.request.LoginRequest;&#10;import com.example.JustEat.dto.request.RegisterRequest;&#10;import com.example.JustEat.service.AuthService;&#10;import lombok.RequiredArgsConstructor;&#10;import org.springframework.web.bind.annotation.PostMapping;&#10;import org.springframework.web.bind.annotation.RequestBody;&#10;import org.springframework.web.bind.annotation.RequestMapping;&#10;import org.springframework.web.bind.annotation.RestController;&#10;&#10;@RestController&#10;@RequestMapping(&quot;/auth&quot;)&#10;@RequiredArgsConstructor&#10;public class AuthController {&#10;    private final AuthService authService;&#10;&#10;    @PostMapping(&quot;/register&quot;)&#10;    public String register(@RequestBody RegisterRequest request){&#10;        authService.register(request);&#10;        return &quot;User registered successfully&quot;;&#10;    }&#10;&#10;    @PostMapping(&quot;/login&quot;)&#10;    public AuthResponse login(@RequestBody LoginRequest request){&#10;        return authService.login(request);&#10;    }&#10;}&#10;" />
+              <option name="updatedContent" value="package com.example.JustEat.controller;&#10;&#10;import com.example.JustEat.dto.response.AuthResponse;&#10;import com.example.JustEat.dto.request.LoginRequest;&#10;import com.example.JustEat.dto.request.RegisterRequest;&#10;import com.example.JustEat.service.AuthService;&#10;import lombok.RequiredArgsConstructor;&#10;import org.springframework.web.bind.annotation.PostMapping;&#10;import org.springframework.web.bind.annotation.RequestBody;&#10;import org.springframework.web.bind.annotation.RequestMapping;&#10;import org.springframework.web.bind.annotation.RestController;&#10;&#10;@RestController&#10;@RequestMapping(&quot;/auth&quot;)&#10;@RequiredArgsConstructor&#10;public class AuthController {&#10;    private final AuthService authService;&#10;&#10;    @PostMapping(&quot;/register&quot;)&#10;    public String register(@Valid @RequestBody RegisterRequest request){&#10;        authService.register(request);&#10;        return &quot;User registered successfully&quot;;&#10;    }&#10;&#10;    @PostMapping(&quot;/login&quot;)&#10;    public AuthResponse login(@Valid @RequestBody LoginRequest request){&#10;        return authService.login(request);&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

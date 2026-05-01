@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* class-based dark mode: add `.dark` to <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white;
+}
+
+#root {
+  min-height: 100vh;
+}

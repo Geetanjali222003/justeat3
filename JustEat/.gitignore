@@ -1,0 +1,35 @@
+# ─── Frontend ────────────────────────────────────────────────────────────────
+Frontend/JustEat_frontend/node_modules/
+Frontend/JustEat_frontend/dist/
+Frontend/JustEat_frontend/dist-ssr/
+Frontend/JustEat_frontend/.env
+Frontend/JustEat_frontend/.env.local
+Frontend/JustEat_frontend/.env.*.local
+Frontend/**/node_modules/
+
+# ─── Backend ─────────────────────────────────────────────────────────────────
+Backend/target/
+Backend/.mvn/wrapper/maven-wrapper.jar
+Backend/*.class
+Backend/.env
+Backend/src/main/resources/application-local.properties
+
+# ─── Java ─────────────────────────────────────────────────────────────────────
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.idea/
+**/.idea/
+.vscode/
+**/*.iml
+.DS_Store
+Thumbs.db
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.local
+*.suo
+*.sw?

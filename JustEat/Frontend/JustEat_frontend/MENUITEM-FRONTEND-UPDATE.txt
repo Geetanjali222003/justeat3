@@ -1,0 +1,156 @@
+╔═══════════════════════════════════════════════════════════════╗
+║   FRONTEND MENUITEM IMAGE UPLOAD - FILES UPDATED!            ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ CHANGES APPLIED TO FRONTEND:
+
+Your ManageRestaurant page now uses FILE UPLOAD instead of URL input!
+
+───────────────────────────────────────────────────────────────────
+
+📝 FILES MODIFIED:
+
+1. menuApi.js
+   ✓ Updated addMenuItem to send multipart/form-data
+   ✓ Added Content-Type header for image upload
+
+2. ManageRestaurant.jsx
+   ✓ Removed imageUrl from form state
+   ✓ Added imageFile state for selected file
+   ✓ Added handleFileChange function
+   ✓ Changed "Image URL" input to file input
+   ✓ Updated handleAdd to create FormData
+   ✓ Sends image file to backend
+
+───────────────────────────────────────────────────────────────────
+
+🔄 WHAT CHANGED IN THE FORM:
+
+BEFORE:
+───────
+<label>Image URL</label>
+<input
+  name="imageUrl"
+  placeholder="https://..."
+  value={form.imageUrl}
+  required
+/>
+
+AFTER:
+──────
+<label>Menu Item Image</label>
+<input
+  type="file"
+  accept="image/*"
+  onChange={handleFileChange}
+  required
+/>
+{imageFile && <p>Selected: {imageFile.name}</p>}
+
+───────────────────────────────────────────────────────────────────
+
+🎯 HOW IT WORKS NOW:
+
+1. User clicks "Add Menu Item"
+2. Fills out form fields:
+   - Item Name
+   - Price
+   - Description
+   - Cuisine Type
+   - Dietary Restriction
+   - Mark as Special (checkbox)
+   - **SELECT IMAGE FILE** ← New!
+3. Clicks "Add to Menu"
+4. Frontend creates FormData:
+   - name
+   - price
+   - description
+   - cuisineType
+   - dietaryRestriction
+   - isSpecial
+   - image (FILE)
+5. Sends to backend with multipart/form-data
+6. Backend uploads to Cloudinary
+7. Returns menu item with Cloudinary URL
+8. Image displayed in menu list!
+
+───────────────────────────────────────────────────────────────────
+
+✅ WHAT YOU'LL SEE:
+
+Form Field Changes:
+✓ "Image URL" → "Menu Item Image"
+✓ Text input → File input
+✓ Shows selected filename
+✓ "Selected: image.jpg" appears when file chosen
+
+No More:
+❌ Manual URL pasting
+❌ External image hosting
+❌ Invalid URL errors
+
+───────────────────────────────────────────────────────────────────
+
+🧪 TESTING:
+
+1. Start Frontend (if not already running):
+   cd Frontend/JustEat_frontend
+   npm run dev
+
+2. Login as OWNER
+
+3. Go to "My Restaurants"
+
+4. Click "Manage" on a restaurant
+
+5. Click "+ Add Menu Item"
+
+6. Fill form and SELECT AN IMAGE FILE
+
+7. Click "Add to Menu"
+
+8. ✅ Image uploaded to Cloudinary automatically!
+   ✅ Menu item created with image URL from Cloudinary
+   ✅ Image displayed in menu list
+
+───────────────────────────────────────────────────────────────────
+
+📊 COMPARISON:
+
+Feature              | Before        | After
+---------------------|---------------|----------------
+Image Input Type     | Text (URL)    | File Upload
+User Provides        | URL String    | Image File
+Processing           | Manual        | Automatic
+Storage              | External      | Cloudinary
+Image Validation     | None          | Backend (type/size)
+URL Generation       | Manual        | Automatic
+
+───────────────────────────────────────────────────────────────────
+
+💡 IMPORTANT NOTES:
+
+✓ Image is REQUIRED when creating new menu items
+✓ Allowed types: JPEG, PNG, WebP, GIF
+✓ Max file size: 5MB
+✓ Images stored in Cloudinary: justeat/menu-items
+✓ Edit function doesn't upload new images yet (enhancement for later)
+✓ Same workflow as Restaurant creation
+
+───────────────────────────────────────────────────────────────────
+
+🎉 STATUS: COMPLETE!
+
+Your frontend now matches the backend implementation:
+✓ File input instead of URL input
+✓ FormData submission
+✓ Multipart/form-data headers
+✓ Automatic Cloudinary upload
+✓ Same as Restaurant creation workflow
+
+Just refresh your browser and test it!
+
+No more manual image URL entry - just select and upload! 🚀
+
+───────────────────────────────────────────────────────────────────
+
