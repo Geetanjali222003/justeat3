@@ -19,7 +19,7 @@ const CUISINE_TYPES = [
   "FRENCH",
   "FAST_FOOD",
 ];
-const DIETARY = ["VEG", "NON_VEG", "EGG", "VEGAN", "JAIN", "GLUTEN_FREE"];
+const DIETARY = ["VEG", "NON_VEG", "VEGAN"];
 const EMPTY_FORM = {
   name: "",
   description: "",

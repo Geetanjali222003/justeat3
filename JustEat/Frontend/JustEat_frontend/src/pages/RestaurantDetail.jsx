@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getRestaurant } from "../api/restaurantApi";
+import { getRestaurant, submitRating } from "../api/restaurantApi";
 import { getMenu } from "../api/menuApi";
 import { addToCart } from "../api/cartApi";
 import { useAuth } from "../context/AuthContext";
@@ -16,6 +16,10 @@ const RestaurantDetail = () => {
   const [error, setError] = useState("");
   const [addingItemId, setAddingItemId] = useState(null);
   const [cartMessage, setCartMessage] = useState("");
+
+  // Rating state
+  const [selectedRating, setSelectedRating] = useState("5");
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -43,11 +47,25 @@ const RestaurantDetail = () => {
     }
   };
 
+  const handleSubmitRating = async () => {
+    setRatingSubmitting(true);
+    try {
+      await submitRating(publicId, parseInt(selectedRating));
+      alert("Rating submitted successfully");
+      // Refresh restaurant to get updated rating
+      const res = await getRestaurant(publicId);
+      setRestaurant(res.data);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to submit rating");
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
+
   const getDietBadge = (diet) => {
     const map = {
       VEG: { bg: "#e8f5e9", color: "#2e7d32" },
       NON_VEG: { bg: "#ffebee", color: "#c62828" },
-      EGG: { bg: "#fff3e0", color: "#e65100" },
       VEGAN: { bg: "#e0f2f1", color: "#00695c" },
     };
     return map[diet] || { bg: "#f5f5f5", color: "#666" };
@@ -140,13 +158,49 @@ const RestaurantDetail = () => {
                       {restaurant.restaurantStatus}
                     </span>
                   )}
-                  {restaurant.rating != null && (
-                    <span className="badge bg-warning text-dark">
-                      ★ {restaurant.rating.toFixed(1)} ({restaurant.ratingCount}
-                      )
+                  <span className="badge bg-light text-dark d-flex align-items-center gap-1">
+                    <span style={{ color: "#ffc107" }}>⭐</span>
+                    <span className="fw-semibold">
+                      {restaurant.rating != null
+                        ? restaurant.rating.toFixed(1)
+                        : "0.0"}{" "}
+                      / 5
                     </span>
-                  )}
+                    {restaurant.ratingCount > 0 && (
+                      <span className="text-muted">
+                        ({restaurant.ratingCount})
+                      </span>
+                    )}
+                  </span>
                 </div>
+
+                {/* Rating Submission UI - Only for Customers */}
+                {role === "CUSTOMER" && (
+                  <div className="d-flex align-items-center gap-2 mt-3 pt-3 border-top">
+                    <span className="small text-muted">
+                      Rate this restaurant:
+                    </span>
+                    <select
+                      className="form-select form-select-sm"
+                      style={{ width: "70px" }}
+                      value={selectedRating}
+                      onChange={(e) => setSelectedRating(e.target.value)}
+                    >
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                    </select>
+                    <button
+                      className="btn btn-orange btn-sm"
+                      onClick={handleSubmitRating}
+                      disabled={ratingSubmitting}
+                    >
+                      {ratingSubmitting ? "..." : "Submit Rating"}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

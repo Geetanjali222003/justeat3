@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getRestaurants } from "../api/restaurantApi";
+import { getRestaurants, getMostOrdered } from "../api/restaurantApi";
+import { addToCart } from "../api/cartApi";
 import { useAuth } from "../context/AuthContext";
 
 const LOCATIONS = ["ALL", "NOIDA", "DELHI", "GURGAON"];
 
 const Home = () => {
-  const { userLocation } = useAuth();
+  const { userLocation, role } = useAuth();
   const [restaurants, setRestaurants] = useState([]);
   const [location, setLocation] = useState(userLocation || "ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Most Ordered
+  const [mostOrdered, setMostOrdered] = useState([]);
+  const [mostOrderedLoading, setMostOrderedLoading] = useState(true);
+  const [addingItemId, setAddingItemId] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -21,6 +27,28 @@ const Home = () => {
       .catch(() => setError("Failed to load restaurants."))
       .finally(() => setLoading(false));
   }, [location]);
+
+  useEffect(() => {
+    if (role === "CUSTOMER") {
+      setMostOrderedLoading(true);
+      getMostOrdered()
+        .then((res) => setMostOrdered(res.data || []))
+        .catch(() => setMostOrdered([]))
+        .finally(() => setMostOrderedLoading(false));
+    }
+  }, [role]);
+
+  const handleAddToCart = async (menuItemId) => {
+    setAddingItemId(menuItemId);
+    try {
+      await addToCart(menuItemId, 1);
+      alert("Added to cart!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add to cart");
+    } finally {
+      setAddingItemId(null);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const s = (status || "OPEN").toUpperCase();
@@ -157,29 +185,100 @@ const Home = () => {
                         </span>
                       ))}
                     </div>
-                    {r.rating != null && (
-                      <div className="d-flex align-items-center gap-1">
-                        <span
-                          style={{
-                            color: "var(--primary-orange)",
-                            fontWeight: "600",
-                            fontSize: "14px",
-                          }}
-                        >
-                          ★ {r.rating.toFixed(1)}
-                        </span>
+                    <div className="d-flex align-items-center gap-1">
+                      <span style={{ color: "#ffc107", fontSize: "14px" }}>
+                        ⭐
+                      </span>
+                      <span
+                        className="fw-semibold"
+                        style={{ fontSize: "14px" }}
+                      >
+                        {r.rating != null ? r.rating.toFixed(1) : "0.0"} / 5
+                      </span>
+                      {r.ratingCount > 0 && (
                         <span
                           className="text-muted"
                           style={{ fontSize: "12px" }}
                         >
                           ({r.ratingCount})
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </Link>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Most Ordered Section - Only for Customers */}
+        {role === "CUSTOMER" && (
+          <div className="mt-5">
+            <h4 className="fw-bold mb-3">🔥 Most Ordered Items</h4>
+
+            {mostOrderedLoading && (
+              <div className="text-center py-4">
+                <div
+                  className="spinner-border spinner-border-sm text-warning"
+                  role="status"
+                >
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            )}
+
+            {!mostOrderedLoading && mostOrdered.length === 0 && (
+              <p className="text-muted">No popular items yet.</p>
+            )}
+
+            {!mostOrderedLoading && mostOrdered.length > 0 && (
+              <div className="row g-4">
+                {mostOrdered.map((item) => (
+                  <div
+                    key={item.menuItemId || item.id}
+                    className="col-12 col-sm-6 col-lg-3"
+                  >
+                    <div className="card h-100 border-0 shadow-sm">
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <h6 className="fw-bold mb-0">
+                            {item.menuItemName || item.name}
+                          </h6>
+                          <span
+                            className="badge bg-danger"
+                            style={{ fontSize: "10px" }}
+                          >
+                            Popular
+                          </span>
+                        </div>
+                        <p className="text-muted small mb-2">
+                          {item.restaurantName}
+                        </p>
+                        <p
+                          className="fw-bold mb-3"
+                          style={{ color: "var(--primary-orange)" }}
+                        >
+                          ₹{item.price?.toFixed(2) || "0.00"}
+                        </p>
+                        <button
+                          onClick={() =>
+                            handleAddToCart(item.menuItemId || item.id)
+                          }
+                          disabled={
+                            addingItemId === (item.menuItemId || item.id)
+                          }
+                          className="btn btn-orange btn-sm w-100"
+                        >
+                          {addingItemId === (item.menuItemId || item.id)
+                            ? "Adding..."
+                            : "Add to Cart"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -13,3 +13,10 @@ export const createRestaurant = (formData) =>
   });
 
 export const getMyRestaurants = () => api.get("/restaurants/my");
+
+// Rating API
+export const submitRating = (restaurantId, rating) =>
+  api.post("/customer/ratings", { restaurantId, rating });
+
+// Most Ordered API
+export const getMostOrdered = () => api.get("/customer/most-ordered");
