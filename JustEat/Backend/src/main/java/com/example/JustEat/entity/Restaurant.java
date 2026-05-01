@@ -67,6 +67,9 @@ public class Restaurant extends BaseEntity{
     @OrderBy("id ASC")
     private List<MenuItem> menuItems = new ArrayList<>();
 
+    @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY)
+    private List<RestaurantRating> ratings = new ArrayList<>();
+
     @PrePersist
     public void generatePublicId() {
         if (publicId == null) {

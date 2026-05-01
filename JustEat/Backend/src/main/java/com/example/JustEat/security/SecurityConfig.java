@@ -55,6 +55,9 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/cart/**")
                         .hasRole("CUSTOMER")
+                        // Customer endpoints - customer only
+                        .requestMatchers("/customer/**")
+                        .hasRole("CUSTOMER")
                         // Order endpoints - customer only
                         .requestMatchers("/order/place", "/order/history", "/order/reorder/**")
                         .hasRole("CUSTOMER")
