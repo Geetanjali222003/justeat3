@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { register as registerService } from "../auth/authService";
-
-const LOCATIONS = ["NOIDA", "DELHI", "GURGAON"];
-const GENDERS = ["MALE", "FEMALE", "OTHER"];
-
-const inputCls =
-  "w-full px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 transition-colors";
-const labelCls =
-  "text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider";
+import { register as registerService, sendOtp } from "../auth/authService";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,25 +10,60 @@ const Register = () => {
     email: "",
     password: "",
     phoneNumber: "",
-    gender: "",
-    location: "",
+    gender: "MALE",
+    location: "NOIDA",
     role: "CUSTOMER",
+    otp: "",
   });
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleSendOtp = async () => {
+    if (!form.email) {
+      setError("Please enter your email address");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    setOtpLoading(true);
+    try {
+      await sendOtp(form.email);
+      setOtpSent(true);
+      setSuccess("OTP sent to your email!");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!otpSent) {
+      setError("Please send and verify OTP first");
+      return;
+    }
+    if (!form.otp) {
+      setError("Please enter the OTP");
+      return;
+    }
     setError("");
+    setSuccess("");
     setLoading(true);
     try {
       await registerService(form);
-      navigate(
-        form.role === "OWNER" ? "/login?next=owner-dashboard" : "/login",
-      );
+      setSuccess("Registration successful! Redirecting to login...");
+      setTimeout(() => {
+        navigate(
+          form.role === "OWNER" ? "/login?next=owner-dashboard" : "/login",
+        );
+      }, 2000);
     } catch (err) {
       setError(
         err.response?.data?.message || "Registration failed. Please try again.",
@@ -47,184 +74,219 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-10 w-full max-w-lg">
-        <div className="text-3xl font-extrabold text-orange-500 mb-1">
-          Just<span className="text-gray-900 dark:text-white">Eat</span>
-        </div>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">
-          Create your account and start ordering
-        </p>
-
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {error}
+    <div className="auth-container">
+      <div style={{ width: "100%", maxWidth: "480px" }}>
+        <div className="auth-card p-4 p-md-5">
+          {/* Brand */}
+          <div className="text-center mb-4">
+            <div className="brand-logo mb-2">
+              <span className="orange">Just</span>
+              <span className="dark">Eat</span>
+            </div>
+            <p
+              style={{ color: "var(--text-gray)", fontSize: "14px", margin: 0 }}
+            >
+              Create your account to get started
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4">
-            {/* Role Picker */}
-            <div className="flex flex-col gap-2">
-              <label className={labelCls}>I am a</label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  {
-                    value: "CUSTOMER",
-                    icon: "🛍️",
-                    label: "Customer",
-                    sub: "Order food",
-                  },
-                  {
-                    value: "OWNER",
-                    icon: "🍴",
-                    label: "Restaurant Owner",
-                    sub: "List & manage",
-                  },
-                ].map(({ value, icon, label, sub }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setForm({ ...form, role: value })}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      form.role === value
-                        ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20"
-                        : "border-gray-200 dark:border-gray-600 hover:border-orange-300"
-                    }`}
+          {/* Alerts */}
+          {error && <div className="alert-swiggy-error mb-3">{error}</div>}
+          {success && (
+            <div className="alert-swiggy-success mb-3">{success}</div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {/* Role Selection */}
+            <div className="mb-4">
+              <label className="form-label">I am a</label>
+              <div className="row g-3">
+                <div className="col-6">
+                  <div
+                    className={`role-card ${form.role === "CUSTOMER" ? "active" : ""}`}
+                    onClick={() => setForm({ ...form, role: "CUSTOMER" })}
                   >
-                    <span className="text-2xl">{icon}</span>
-                    <span className="text-sm font-semibold text-gray-800 dark:text-white">
-                      {label}
-                    </span>
-                    <span className="text-xs text-gray-400">{sub}</span>
-                  </button>
-                ))}
+                    <div className="icon">🛍️</div>
+                    <div className="title">Customer</div>
+                    <div className="subtitle">Order delicious food</div>
+                  </div>
+                </div>
+                <div className="col-6">
+                  <div
+                    className={`role-card ${form.role === "OWNER" ? "active" : ""}`}
+                    onClick={() => setForm({ ...form, role: "OWNER" })}
+                  >
+                    <div className="icon">🍴</div>
+                    <div className="title">Restaurant Owner</div>
+                    <div className="subtitle">List your restaurant</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>First Name</label>
+            {/* Name Fields */}
+            <div className="row g-3 mb-3">
+              <div className="col-6">
+                <label className="form-label">First Name</label>
                 <input
+                  type="text"
                   name="firstName"
+                  className="form-control"
                   placeholder="John"
                   value={form.firstName}
                   onChange={handleChange}
                   required
-                  className={inputCls}
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Last Name</label>
+              <div className="col-6">
+                <label className="form-label">Last Name</label>
                 <input
+                  type="text"
                   name="lastName"
+                  className="form-control"
                   placeholder="Doe"
                   value={form.lastName}
                   onChange={handleChange}
                   required
-                  className={inputCls}
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className={labelCls}>Email</label>
-              <input
-                type="email"
-                name="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={handleChange}
-                required
-                className={inputCls}
-              />
+            {/* Email with OTP */}
+            <div className="mb-3">
+              <label className="form-label">Email</label>
+              <div className="input-group">
+                <input
+                  type="email"
+                  name="email"
+                  className="form-control"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-orange"
+                  onClick={handleSendOtp}
+                  disabled={otpLoading || !form.email}
+                  style={{ fontSize: "12px", padding: "14px 16px" }}
+                >
+                  {otpLoading ? "Sending..." : otpSent ? "Resend" : "Send OTP"}
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className={labelCls}>Password</label>
+            {/* OTP Input */}
+            {otpSent && (
+              <div className="mb-3">
+                <label className="form-label">Enter OTP</label>
+                <input
+                  type="text"
+                  name="otp"
+                  className="form-control"
+                  placeholder="Enter 6-digit OTP"
+                  value={form.otp}
+                  onChange={handleChange}
+                  required
+                  maxLength={6}
+                  style={{
+                    letterSpacing: "8px",
+                    textAlign: "center",
+                    fontWeight: "600",
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Password */}
+            <div className="mb-3">
+              <label className="form-label">Password</label>
               <input
                 type="password"
                 name="password"
+                className="form-control"
                 placeholder="Min. 6 characters"
                 value={form.password}
                 onChange={handleChange}
                 required
                 minLength={6}
-                className={inputCls}
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className={labelCls}>Phone Number</label>
+            {/* Phone */}
+            <div className="mb-3">
+              <label className="form-label">Phone Number</label>
               <input
+                type="tel"
                 name="phoneNumber"
-                placeholder="10-digit number"
+                className="form-control"
+                placeholder="10-digit mobile number"
                 value={form.phoneNumber}
                 onChange={handleChange}
                 pattern="[0-9]{10}"
                 required
-                className={inputCls}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Gender</label>
+            {/* Gender and Location */}
+            <div className="row g-3 mb-4">
+              <div className="col-6">
+                <label className="form-label">Gender</label>
                 <select
                   name="gender"
+                  className="form-select"
                   value={form.gender}
                   onChange={handleChange}
                   required
-                  className={inputCls}
                 >
-                  <option value="">Select</option>
-                  {GENDERS.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Location</label>
+              <div className="col-6">
+                <label className="form-label">Location</label>
                 <select
                   name="location"
+                  className="form-select"
                   value={form.location}
                   onChange={handleChange}
                   required
-                  className={inputCls}
                 >
-                  <option value="">Select</option>
-                  {LOCATIONS.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
+                  <option value="NOIDA">Noida</option>
+                  <option value="DELHI">Delhi</option>
+                  <option value="GURGAON">Gurgaon</option>
                 </select>
               </div>
             </div>
-          </div>
 
-          <div className="mt-6 flex flex-col gap-3">
+            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-all cursor-pointer border-none"
-              disabled={loading}
+              className="btn btn-orange w-100 mb-4"
+              disabled={loading || !otpSent}
             >
-              {loading
-                ? "Creating account…"
-                : form.role === "OWNER"
-                  ? "Create Owner Account →"
-                  : "Create Account"}
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+
+            {/* Divider */}
+            <div className="auth-divider">
+              <span>or</span>
+            </div>
+
+            {/* Login Link */}
+            <p
+              className="text-center mb-0"
+              style={{ color: "var(--text-gray)", fontSize: "14px" }}
+            >
               Already have an account?{" "}
-              <Link to="/login" className="text-orange-500 hover:underline">
-                Sign In
+              <Link to="/login" className="auth-link">
+                Sign in
               </Link>
             </p>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

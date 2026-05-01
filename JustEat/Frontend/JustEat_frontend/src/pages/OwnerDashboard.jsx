@@ -3,17 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getMyRestaurants } from "../api/restaurantApi";
 
-const statusCls = (status) => {
-  const base =
-    "text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide";
-  const s = (status || "OPEN").toUpperCase();
-  if (s === "OPEN")
-    return `${base} bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400`;
-  if (s === "CLOSED")
-    return `${base} bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400`;
-  return `${base} bg-yellow-100 dark:bg-yellow-900/30 text-orange-700 dark:text-orange-400`;
-};
-
 const OwnerDashboard = () => {
   const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
@@ -27,23 +16,31 @@ const OwnerDashboard = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const getStatusBadge = (status) => {
+    const s = (status || "OPEN").toUpperCase();
+    if (s === "OPEN") return "bg-success";
+    if (s === "CLOSED") return "bg-danger";
+    return "bg-warning";
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <>
       <Navbar />
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="container py-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">
+            <h1
+              className="h4 fw-bold mb-1"
+              style={{ color: "var(--text-dark)" }}
+            >
               My Restaurants
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Manage your listings on JustEat
-            </p>
+            <p className="text-muted small mb-0">Manage your listings</p>
           </div>
           <button
             onClick={() => navigate("/create-restaurant")}
-            className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all cursor-pointer border-none"
+            className="btn btn-orange"
           >
             + Add Restaurant
           </button>
@@ -51,104 +48,113 @@ const OwnerDashboard = () => {
 
         {/* Loading */}
         {loading && (
-          <div className="flex justify-center items-center py-20">
-            <div className="w-10 h-10 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+          <div className="text-center py-5">
+            <div className="spinner-border text-warning" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm">
+          <div className="alert alert-danger" role="alert">
             {error}
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty State */}
         {!loading && !error && restaurants.length === 0 && (
-          <div className="text-center py-24">
-            <div className="text-7xl mb-5">🏪</div>
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
-              You haven&apos;t listed any restaurants yet
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">
-              Create your first restaurant listing and start receiving orders.
-            </p>
+          <div className="text-center py-5">
+            <div style={{ fontSize: "4rem" }}>🏪</div>
+            <h5 className="mt-3">No restaurants yet</h5>
+            <p className="text-muted">Create your first restaurant listing</p>
             <button
               onClick={() => navigate("/create-restaurant")}
-              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl transition-all cursor-pointer border-none text-sm"
+              className="btn btn-orange mt-3"
             >
-              + Create My First Restaurant
+              + Create Restaurant
             </button>
           </div>
         )}
 
-        {/* Restaurant cards */}
+        {/* Restaurant Grid */}
         {!loading && !error && restaurants.length > 0 && (
-          <div
-            className="grid gap-5"
-            style={{
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            }}
-          >
+          <div className="row g-4">
             {restaurants.map((r) => (
-              <div
-                key={r.publicId}
-                className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md flex flex-col"
-              >
-                {r.imageUrl ? (
-                  <img
-                    src={r.imageUrl}
-                    alt={r.name}
-                    className="w-full h-40 object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-40 bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-4xl">
-                    🍽️
-                  </div>
-                )}
-                <div className="p-4 flex flex-col gap-2 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight">
-                      {r.name}
-                    </h3>
-                    <span className={statusCls(r.restaurantStatus)}>
-                      {r.restaurantStatus || "OPEN"}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                    {r.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 flex-wrap mt-1">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      📍 {r.location}
-                    </span>
-                    {(r.cuisineTypes || []).slice(0, 2).map((c) => (
+              <div key={r.publicId} className="col-12 col-md-6 col-lg-4">
+                <div className="card h-100 border-0 shadow-sm">
+                  {r.imageUrl ? (
+                    <img
+                      src={r.imageUrl}
+                      alt={r.name}
+                      className="card-img-top"
+                      style={{ height: "140px", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div
+                      className="card-img-top d-flex align-items-center justify-content-center"
+                      style={{
+                        height: "140px",
+                        background: "#fff5eb",
+                        fontSize: "2.5rem",
+                      }}
+                    >
+                      🍽️
+                    </div>
+                  )}
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <h6 className="card-title fw-bold mb-0">{r.name}</h6>
                       <span
-                        key={c}
-                        className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 border border-orange-200 dark:border-orange-700 capitalize"
+                        className={`badge ${getStatusBadge(r.restaurantStatus)}`}
+                        style={{ fontSize: "10px" }}
                       >
-                        {c.toLowerCase().replace(/_/g, " ")}
+                        {r.restaurantStatus || "OPEN"}
                       </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2">
-                    <button
-                      onClick={() => navigate(`/restaurant/${r.publicId}`)}
-                      className="flex-1 text-xs font-semibold py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all cursor-pointer border-none"
+                    </div>
+                    <p
+                      className="card-text text-muted small mb-2"
+                      style={{
+                        overflow: "hidden",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
                     >
-                      View
-                    </button>
-                    <button
-                      className="flex-1 text-xs font-semibold py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-all cursor-pointer border-none"
-                      onClick={() =>
-                        navigate(`/manage-restaurant/${r.publicId}`)
-                      }
-                    >
-                      Manage
-                    </button>
+                      {r.description}
+                    </p>
+                    <div className="d-flex align-items-center gap-2 mb-3 small text-muted">
+                      <span>📍 {r.location}</span>
+                      {(r.cuisineTypes || []).slice(0, 1).map((c) => (
+                        <span
+                          key={c}
+                          className="badge"
+                          style={{
+                            backgroundColor: "#fff5eb",
+                            color: "var(--primary-orange)",
+                            fontSize: "10px",
+                          }}
+                        >
+                          {c.toLowerCase().replace(/_/g, " ")}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button
+                        onClick={() => navigate(`/restaurant/${r.publicId}`)}
+                        className="btn btn-outline-secondary btn-sm flex-fill"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() =>
+                          navigate(`/manage-restaurant/${r.publicId}`)
+                        }
+                        className="btn btn-orange btn-sm flex-fill"
+                      >
+                        Manage
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -156,7 +162,7 @@ const OwnerDashboard = () => {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 

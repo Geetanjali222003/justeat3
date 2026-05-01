@@ -5,17 +5,6 @@ import { getOwnerOrders, updateOrderStatus } from "../api/orderApi";
 
 const STATUS_OPTIONS = ["PENDING", "PREPARING", "READY", "COMPLETED"];
 
-const statusCls = (status) => {
-  const base = "text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide";
-  const map = {
-    PENDING: `${base} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400`,
-    PREPARING: `${base} bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400`,
-    READY: `${base} bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400`,
-    COMPLETED: `${base} bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400`,
-  };
-  return map[status] || base;
-};
-
 const OwnerOrdersPage = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -42,14 +31,11 @@ const OwnerOrdersPage = () => {
     }
   };
 
-  // Initial fetch + polling every 5 seconds
   useEffect(() => {
     fetchOrders(true);
-
     intervalRef.current = setInterval(() => {
       fetchOrders(false);
     }, 5000);
-
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -64,7 +50,6 @@ const OwnerOrdersPage = () => {
       await updateOrderStatus(publicId, newStatus);
       setSuccessMsg("Status updated!");
       setTimeout(() => setSuccessMsg(""), 2000);
-      // Refresh orders
       await fetchOrders(false);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update status");
@@ -73,137 +58,159 @@ const OwnerOrdersPage = () => {
     }
   };
 
+  const getStatusBadge = (status) => {
+    const map = {
+      PENDING: "bg-warning",
+      PREPARING: "bg-info",
+      READY: "bg-primary",
+      COMPLETED: "bg-success",
+    };
+    return map[status] || "bg-secondary";
+  };
+
   return (
     <>
       <Navbar />
-      <div className="px-8 py-8 max-w-5xl mx-auto">
+      <div className="container py-4">
+        {/* Back Button */}
         <button
-          className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-orange-500 text-sm font-semibold mb-6 cursor-pointer bg-transparent border-none p-0 transition-colors"
+          className="btn btn-link text-muted p-0 mb-3 text-decoration-none"
           onClick={() => navigate("/owner-dashboard")}
         >
           ← Back to Dashboard
         </button>
 
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            📋 Customer Orders
-          </h1>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            Live updates
-          </div>
+        {/* Header */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h1 className="h4 fw-bold mb-0">📋 Customer Orders</h1>
+          <span className="badge bg-success d-flex align-items-center gap-1">
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                backgroundColor: "white",
+              }}
+            ></span>
+            Live
+          </span>
         </div>
 
-        {successMsg && (
-          <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {successMsg}
-          </div>
-        )}
+        {/* Alerts */}
+        {successMsg && <div className="alert alert-success">{successMsg}</div>}
+        {error && <div className="alert alert-danger">{error}</div>}
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {error}
-          </div>
-        )}
-
+        {/* Loading */}
         {loading && (
-          <div className="flex justify-center items-center py-16">
-            <div className="w-10 h-10 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+          <div className="text-center py-5">
+            <div className="spinner-border text-warning" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
           </div>
         )}
 
+        {/* Empty State */}
         {!loading && orders.length === 0 && (
-          <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-            <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              No orders yet
-            </h3>
-            <p className="mt-2">Orders from customers will appear here.</p>
+          <div className="text-center py-5">
+            <div style={{ fontSize: "4rem" }}>📭</div>
+            <h5 className="mt-3">No orders yet</h5>
+            <p className="text-muted">Orders from customers will appear here</p>
           </div>
         )}
 
+        {/* Orders List */}
         {!loading && orders.length > 0 && (
-          <div className="flex flex-col gap-4">
+          <div className="row g-3">
             {orders.map((order) => (
-              <div
-                key={order.publicId}
-                className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md border-l-4 border-orange-500"
-              >
-                {/* Header */}
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="font-bold text-lg text-gray-900 dark:text-white">
-                      {order.restaurantName}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Order ID: {order.publicId?.substring(0, 8)}...
-                    </div>
-                  </div>
-                  <span className={statusCls(order.status)}>
-                    {order.status}
-                  </span>
-                </div>
-
-                {/* Customer Info */}
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
-                  <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    👤 {order.customerName}
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    📧 {order.customerEmail}
-                  </div>
-                  {order.createdAt && (
-                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      🕒 {new Date(order.createdAt).toLocaleString()}
-                    </div>
-                  )}
-                </div>
-
-                {/* Items List */}
-                {order.items && order.items.length > 0 && (
-                  <div className="mb-4">
-                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Items:
-                    </div>
-                    {order.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between text-sm py-1 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {item.name} × {item.quantity}
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400">
-                          ₹{(item.price * item.quantity).toFixed(2)}
-                        </span>
+              <div key={order.publicId} className="col-12 col-lg-6">
+                <div
+                  className="card border-0 shadow-sm h-100"
+                  style={{ borderLeft: "4px solid var(--primary-orange)" }}
+                >
+                  <div className="card-body">
+                    {/* Header */}
+                    <div className="d-flex justify-content-between align-items-start mb-3">
+                      <div>
+                        <h6 className="fw-bold mb-1">{order.restaurantName}</h6>
+                        <small className="text-muted">
+                          ID: {order.publicId?.substring(0, 8)}...
+                        </small>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <span
+                        className={`badge ${getStatusBadge(order.status)}`}
+                        style={{ fontSize: "10px" }}
+                      >
+                        {order.status}
+                      </span>
+                    </div>
 
-                {/* Footer - Total & Status Update */}
-                <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="text-xl font-extrabold text-orange-500">
-                    ₹{order.totalAmount?.toFixed(2)}
-                  </div>
+                    {/* Customer Info */}
+                    <div className="bg-light rounded p-2 mb-3 small">
+                      <div className="fw-semibold">👤 {order.customerName}</div>
+                      <div className="text-muted">📧 {order.customerEmail}</div>
+                      {order.createdAt && (
+                        <div
+                          className="text-muted"
+                          style={{ fontSize: "11px" }}
+                        >
+                          🕒 {new Date(order.createdAt).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Status Dropdown */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-500 dark:text-gray-400">
-                      Update:
-                    </label>
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleStatusChange(order.publicId, e.target.value)}
-                      disabled={updatingId === order.publicId}
-                      className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg px-3 py-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    >
-                      {STATUS_OPTIONS.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                    {updatingId === order.publicId && (
-                      <div className="w-5 h-5 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+                    {/* Items */}
+                    {order.items && order.items.length > 0 && (
+                      <ul className="list-group list-group-flush mb-3">
+                        {order.items.map((item, idx) => (
+                          <li
+                            key={idx}
+                            className="list-group-item d-flex justify-content-between px-0 py-1 border-0 small"
+                          >
+                            <span>
+                              {item.name} × {item.quantity}
+                            </span>
+                            <span className="text-muted">
+                              ₹{(item.price * item.quantity).toFixed(2)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
+
+                    {/* Footer */}
+                    <div className="d-flex justify-content-between align-items-center pt-3 border-top">
+                      <span
+                        className="h5 fw-bold mb-0"
+                        style={{ color: "var(--primary-orange)" }}
+                      >
+                        ₹{order.totalAmount?.toFixed(2)}
+                      </span>
+                      <div className="d-flex align-items-center gap-2">
+                        <select
+                          value={order.status}
+                          onChange={(e) =>
+                            handleStatusChange(order.publicId, e.target.value)
+                          }
+                          disabled={updatingId === order.publicId}
+                          className="form-select form-select-sm"
+                          style={{ width: "auto" }}
+                        >
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                        {updatingId === order.publicId && (
+                          <div
+                            className="spinner-border spinner-border-sm text-warning"
+                            role="status"
+                          >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -216,4 +223,3 @@ const OwnerOrdersPage = () => {
 };
 
 export default OwnerOrdersPage;
-

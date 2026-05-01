@@ -15,11 +15,6 @@ const CUISINE_TYPES = [
   "FAST_FOOD",
 ];
 
-const inputCls =
-  "w-full px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 transition-colors";
-const labelCls =
-  "text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider";
-
 const CreateRestaurant = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -87,66 +82,61 @@ const CreateRestaurant = () => {
   return (
     <>
       <Navbar />
-      <div className="px-8 py-8 max-w-2xl mx-auto">
+      <div className="container py-4" style={{ maxWidth: "600px" }}>
         <button
-          className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-orange-500 text-sm font-semibold mb-6 cursor-pointer bg-transparent border-none p-0 transition-colors"
+          className="btn btn-link text-muted p-0 mb-3 text-decoration-none"
           onClick={() => navigate("/")}
         >
           ← Back
         </button>
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-          Add New Restaurant
-        </h1>
+        <h1 className="h4 fw-bold mb-4">Add New Restaurant</h1>
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {success}
-          </div>
-        )}
+        {error && <div className="alert alert-danger">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md">
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Restaurant Name</label>
+        <div className="card border-0 shadow-sm">
+          <div className="card-body p-4">
+            <form onSubmit={handleSubmit}>
+              {/* Restaurant Name */}
+              <div className="mb-3">
+                <label className="form-label">Restaurant Name</label>
                 <input
+                  type="text"
                   name="name"
+                  className="form-control"
                   placeholder="e.g. Spice Garden"
                   value={form.name}
                   onChange={handleChange}
                   required
                   minLength={2}
                   maxLength={100}
-                  className={inputCls}
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Description</label>
+              {/* Description */}
+              <div className="mb-3">
+                <label className="form-label">Description</label>
                 <textarea
                   name="description"
+                  className="form-control"
                   placeholder="Tell customers what makes you special…"
                   value={form.description}
                   onChange={handleChange}
                   required
                   maxLength={500}
-                  className={`${inputCls} resize-y min-h-20`}
+                  rows={3}
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Location</label>
+              {/* Location */}
+              <div className="mb-3">
+                <label className="form-label">Location</label>
                 <select
                   name="location"
+                  className="form-select"
                   value={form.location}
                   onChange={handleChange}
                   required
-                  className={inputCls}
                 >
                   <option value="">Select city</option>
                   {LOCATIONS.map((l) => (
@@ -157,63 +147,67 @@ const CreateRestaurant = () => {
                 </select>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Restaurant Image</label>
+              {/* Image */}
+              <div className="mb-3">
+                <label className="form-label">Restaurant Image</label>
                 <input
                   type="file"
                   accept="image/*"
+                  className="form-control"
                   onChange={handleFileChange}
                   required
-                  className={inputCls}
                 />
                 {imageFile && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <small className="text-muted">
                     Selected: {imageFile.name}
-                  </p>
+                  </small>
                 )}
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className={labelCls}>Cuisine Types</label>
-                <div
-                  className="grid gap-2 mt-1"
-                  style={{
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(140px, 1fr))",
-                  }}
-                >
+              {/* Cuisine Types */}
+              <div className="mb-4">
+                <label className="form-label">Cuisine Types</label>
+                <div className="row g-2">
                   {CUISINE_TYPES.map((c) => (
-                    <label
-                      key={c}
-                      className={`flex items-center gap-2 px-3 py-2 border-2 rounded-lg cursor-pointer text-sm font-semibold transition-all ${
-                        form.cuisineTypes.includes(c)
-                          ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-500"
-                          : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-orange-400"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.cuisineTypes.includes(c)}
-                        onChange={() => toggleCuisine(c)}
-                        className="accent-orange-500"
-                      />
-                      {c.replace("_", " ")}
-                    </label>
+                    <div key={c} className="col-6 col-md-4">
+                      <div
+                        className={`form-check border rounded p-2 ${
+                          form.cuisineTypes.includes(c)
+                            ? "border-warning bg-warning bg-opacity-10"
+                            : ""
+                        }`}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => toggleCuisine(c)}
+                      >
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          checked={form.cuisineTypes.includes(c)}
+                          onChange={() => toggleCuisine(c)}
+                          style={{ accentColor: "var(--primary-orange)" }}
+                        />
+                        <label
+                          className="form-check-label small"
+                          style={{ cursor: "pointer" }}
+                        >
+                          {c.replace("_", " ")}
+                        </label>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
-            </div>
 
-            <div className="mt-6">
+              {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-all cursor-pointer border-none"
+                className="btn btn-orange w-100"
                 disabled={loading}
               >
-                {loading ? "Creating…" : "Create Restaurant"}
+                {loading ? "Creating..." : "Create Restaurant"}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </>

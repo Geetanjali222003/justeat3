@@ -3,21 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getOrderHistory, reorder } from "../api/orderApi";
 
-const statusCls = (status) => {
-  const base = "text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide";
-  const map = {
-    PENDING: `${base} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400`,
-    CONFIRMED: `${base} bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400`,
-    PREPARING: `${base} bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400`,
-    READY: `${base} bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400`,
-    COMPLETED: `${base} bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400`,
-    OUT_FOR_DELIVERY: `${base} bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400`,
-    DELIVERED: `${base} bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400`,
-    CANCELLED: `${base} bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400`,
-  };
-  return map[status] || base;
-};
-
 const OrderHistoryPage = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -74,109 +59,140 @@ const OrderHistoryPage = () => {
     }
   };
 
+  const getStatusBadge = (status) => {
+    const map = {
+      PENDING: "bg-warning",
+      CONFIRMED: "bg-info",
+      PREPARING: "bg-warning",
+      READY: "bg-primary",
+      COMPLETED: "bg-success",
+      OUT_FOR_DELIVERY: "bg-info",
+      DELIVERED: "bg-success",
+      CANCELLED: "bg-danger",
+    };
+    return map[status] || "bg-secondary";
+  };
+
   return (
     <>
       <Navbar />
-      <div className="px-8 py-8 max-w-4xl mx-auto">
+      <div className="container py-4" style={{ maxWidth: "700px" }}>
+        {/* Back Button */}
         <button
-          className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-orange-500 text-sm font-semibold mb-6 cursor-pointer bg-transparent border-none p-0 transition-colors"
+          className="btn btn-link text-muted p-0 mb-3 text-decoration-none"
           onClick={() => navigate("/")}
         >
           ← Back to Home
         </button>
 
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Order History
-          </h1>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            Live status
-          </div>
+        {/* Header */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h1 className="h4 fw-bold mb-0">Order History</h1>
+          <span className="badge bg-success d-flex align-items-center gap-1">
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                backgroundColor: "white",
+              }}
+            ></span>
+            Live
+          </span>
         </div>
 
-        {successMsg && (
-          <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {successMsg}
-          </div>
-        )}
+        {/* Alerts */}
+        {successMsg && <div className="alert alert-success">{successMsg}</div>}
+        {error && <div className="alert alert-danger">{error}</div>}
 
+        {/* Loading */}
         {loading && (
-          <div className="flex justify-center items-center py-16">
-            <div className="w-10 h-10 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+          <div className="text-center py-5">
+            <div className="spinner-border text-warning" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {error}
-          </div>
-        )}
-
+        {/* Empty State */}
         {!loading && orders.length === 0 && (
-          <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-            <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              No orders yet
-            </h3>
-            <p className="mt-2">Start ordering delicious food!</p>
+          <div className="text-center py-5">
+            <div style={{ fontSize: "4rem" }}>📦</div>
+            <h5 className="mt-3">No orders yet</h5>
+            <p className="text-muted">Start ordering delicious food!</p>
             <button
               onClick={() => navigate("/")}
-              className="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-lg transition-all border-none cursor-pointer"
+              className="btn btn-orange mt-3"
             >
               Browse Restaurants
             </button>
           </div>
         )}
 
+        {/* Orders List */}
         {!loading && orders.length > 0 && (
-          <div className="flex flex-col gap-4">
+          <div className="d-flex flex-column gap-3">
             {orders.map((order) => (
               <div
                 key={order.publicId || order.id}
-                className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md"
+                className="card border-0 shadow-sm"
               >
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <div className="font-bold text-lg text-gray-900 dark:text-white">
-                      {order.restaurantName || order.restaurant?.name || "Restaurant"}
+                <div className="card-body">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <h6 className="fw-bold mb-1">
+                        {order.restaurantName ||
+                          order.restaurant?.name ||
+                          "Restaurant"}
+                      </h6>
+                      <small className="text-muted">
+                        {order.items?.length || 0} item(s)
+                      </small>
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      {order.items?.length || 0} item(s)
-                    </div>
+                    <span
+                      className={`badge ${getStatusBadge(order.status)}`}
+                      style={{ fontSize: "10px" }}
+                    >
+                      {order.status?.replace("_", " ")}
+                    </span>
                   </div>
-                  <span className={statusCls(order.status)}>
-                    {order.status?.replace("_", " ")}
-                  </span>
-                </div>
 
-                {/* Items List */}
-                {order.items && order.items.length > 0 && (
-                  <div className="mb-3 py-2 border-t border-gray-100 dark:border-gray-700">
-                    {order.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between text-sm py-1">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {item.name || item.menuItem?.name} × {item.quantity}
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400">
-                          ₹{(item.price * item.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  {/* Items List */}
+                  {order.items && order.items.length > 0 && (
+                    <ul className="list-group list-group-flush my-2">
+                      {order.items.map((item, idx) => (
+                        <li
+                          key={idx}
+                          className="list-group-item d-flex justify-content-between px-0 py-2 border-0"
+                        >
+                          <span>
+                            {item.name || item.menuItem?.name} × {item.quantity}
+                          </span>
+                          <span className="text-muted">
+                            ₹{(item.price * item.quantity).toFixed(2)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-                <div className="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700">
-                  <div className="text-lg font-extrabold text-orange-500">
-                    ₹{order.totalAmount?.toFixed(2)}
+                  <div className="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <span
+                      className="h5 fw-bold mb-0"
+                      style={{ color: "var(--primary-orange)" }}
+                    >
+                      ₹{order.totalAmount?.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={(e) => handleReorder(e, order.publicId)}
+                      disabled={reorderingId === order.publicId}
+                      className="btn btn-orange btn-sm"
+                    >
+                      {reorderingId === order.publicId
+                        ? "Adding..."
+                        : "🔄 Reorder"}
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => handleReorder(e, order.publicId)}
-                    disabled={reorderingId === order.publicId}
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer"
-                  >
-                    {reorderingId === order.publicId ? "Adding..." : "🔄 Reorder"}
-                  </button>
                 </div>
               </div>
             ))}
@@ -188,4 +204,3 @@ const OrderHistoryPage = () => {
 };
 
 export default OrderHistoryPage;
-

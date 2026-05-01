@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import CartItemCard from "../components/CartItemCard";
 import { getCart, removeCartItem, clearCart } from "../api/cartApi";
 import { placeOrder } from "../api/orderApi";
 
@@ -81,101 +80,120 @@ const CartPage = () => {
   return (
     <>
       <Navbar />
-      <div className="px-8 py-8 max-w-4xl mx-auto">
+      <div className="container py-4" style={{ maxWidth: "700px" }}>
+        {/* Back Button */}
         <button
-          className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-orange-500 text-sm font-semibold mb-6 cursor-pointer bg-transparent border-none p-0 transition-colors"
+          className="btn btn-link text-muted p-0 mb-3 text-decoration-none"
           onClick={() => navigate(-1)}
         >
           ← Back
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Your Cart
-        </h1>
+        <h1 className="h4 fw-bold mb-4">Your Cart</h1>
 
+        {/* Loading */}
         {loading && (
-          <div className="flex justify-center items-center py-16">
-            <div className="w-10 h-10 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+          <div className="text-center py-5">
+            <div className="spinner-border text-warning" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {error}
-          </div>
-        )}
+        {/* Alerts */}
+        {error && <div className="alert alert-danger">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
 
-        {success && (
-          <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3 text-sm mb-4">
-            {success}
-          </div>
-        )}
-
+        {/* Empty State */}
         {!loading && isEmpty && (
-          <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-            <div className="text-6xl mb-4">🛒</div>
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              Your cart is empty
-            </h3>
-            <p className="mt-2">Add some delicious items to your cart!</p>
+          <div className="text-center py-5">
+            <div style={{ fontSize: "4rem" }}>🛒</div>
+            <h5 className="mt-3">Your cart is empty</h5>
+            <p className="text-muted">Add some delicious items!</p>
             <button
               onClick={() => navigate("/")}
-              className="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-lg transition-all border-none cursor-pointer"
+              className="btn btn-orange mt-3"
             >
               Browse Restaurants
             </button>
           </div>
         )}
 
+        {/* Cart Items */}
         {!loading && !isEmpty && (
           <>
             {/* Restaurant Name */}
             {cart.restaurant && (
-              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                From:{" "}
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {cart.restaurant.name}
-                </span>
-              </div>
+              <p className="text-muted small mb-3">
+                From: <strong>{cart.restaurant.name}</strong>
+              </p>
             )}
 
-            {/* Cart Items */}
-            <div className="flex flex-col gap-3 mb-6">
-              {cart.items.map((item) => (
-                <CartItemCard
-                  key={item.id}
-                  item={item}
-                  onRemove={handleRemove}
-                  removing={removingId === item.id}
-                />
-              ))}
+            {/* Items List */}
+            <div className="card border-0 shadow-sm mb-4">
+              <ul className="list-group list-group-flush">
+                {cart.items.map((item) => (
+                  <li
+                    key={item.id}
+                    className="list-group-item d-flex justify-content-between align-items-center py-3"
+                  >
+                    <div>
+                      <h6 className="mb-1 fw-semibold">
+                        {item.menuItem?.name || item.name}
+                      </h6>
+                      <small className="text-muted">
+                        ₹{item.menuItem?.price || item.price} × {item.quantity}
+                      </small>
+                    </div>
+                    <div className="d-flex align-items-center gap-3">
+                      <span
+                        className="fw-bold"
+                        style={{ color: "var(--primary-orange)" }}
+                      >
+                        ₹
+                        {(
+                          (item.menuItem?.price || item.price) * item.quantity
+                        ).toFixed(2)}
+                      </span>
+                      <button
+                        onClick={() => handleRemove(item.id)}
+                        disabled={removingId === item.id}
+                        className="btn btn-sm btn-outline-danger"
+                      >
+                        {removingId === item.id ? "..." : "×"}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* Total */}
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                  Total Amount
-                </span>
-                <span className="text-2xl font-extrabold text-orange-500">
+            <div className="card border-0 shadow-sm mb-4">
+              <div className="card-body d-flex justify-content-between align-items-center">
+                <span className="h6 mb-0">Total Amount</span>
+                <span
+                  className="h4 mb-0 fw-bold"
+                  style={{ color: "var(--primary-orange)" }}
+                >
                   ₹{cart.totalAmount?.toFixed(2)}
                 </span>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4 flex-wrap">
+            <div className="d-flex gap-3">
               <button
                 onClick={handleClear}
                 disabled={clearing}
-                className="border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold px-6 py-2.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-transparent"
+                className="btn btn-outline-secondary"
               >
                 {clearing ? "Clearing..." : "Clear Cart"}
               </button>
               <button
                 onClick={handlePlaceOrder}
                 disabled={placing}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-2.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer flex-1 sm:flex-none"
+                className="btn btn-orange flex-fill"
               >
                 {placing ? "Placing Order..." : "Place Order"}
               </button>
@@ -188,4 +206,3 @@ const CartPage = () => {
 };
 
 export default CartPage;
-

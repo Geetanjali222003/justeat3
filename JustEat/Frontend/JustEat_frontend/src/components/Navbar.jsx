@@ -1,10 +1,21 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
+
+const navLinkStyle = {
+  color: "var(--text-dark)",
+  fontWeight: "500",
+  fontSize: "14px",
+  textDecoration: "none",
+  padding: "8px 16px",
+  borderRadius: "4px",
+  transition: "all 0.2s ease",
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+};
 
 const Navbar = () => {
   const { logout, role } = useAuth();
-  const { dark, toggle } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -13,58 +24,89 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm h-16 flex items-center justify-between px-8">
-      <Link
-        to="/"
-        className="text-2xl font-extrabold text-orange-500 tracking-tight no-underline"
+    <nav
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        backgroundColor: "white",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+        borderBottom: "1px solid var(--border-light)",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: "12px 24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
       >
-        Just<span className="text-gray-900 dark:text-white">Eat</span>
-      </Link>
-      <div className="flex items-center gap-4">
-        {role === "OWNER" && (
-          <>
-            <Link
-              to="/owner/orders"
-              className="text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 font-semibold text-sm transition-colors no-underline"
-            >
-              📋 Orders
-            </Link>
-            <Link to="/create-restaurant">
-              <button className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white font-semibold text-sm px-4 py-2 rounded-lg transition-all cursor-pointer bg-transparent">
-                + Add Restaurant
-              </button>
-            </Link>
-          </>
-        )}
-        {role === "CUSTOMER" && (
-          <>
-            <Link
-              to="/cart"
-              className="text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 font-semibold text-sm transition-colors no-underline"
-            >
-              🛒 Cart
-            </Link>
-            <Link
-              to="/orders"
-              className="text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 font-semibold text-sm transition-colors no-underline"
-            >
-              📦 Orders
-            </Link>
-          </>
-        )}
-        <button
-          onClick={toggle}
-          title={dark ? "Switch to light mode" : "Switch to dark mode"}
-          className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 w-9 h-9 rounded-lg transition-all flex items-center justify-center cursor-pointer border-none text-base"
-        >
-          {dark ? "☀️" : "🌙"}
-        </button>
-        <button
-          className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold text-sm px-4 py-2 rounded-lg transition-all cursor-pointer border-none"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+        {/* Logo */}
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <div className="brand-logo" style={{ fontSize: "24px" }}>
+            <span className="orange">Just</span>
+            <span className="dark">Eat</span>
+          </div>
+        </Link>
+
+        {/* Navigation Links */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {role === "OWNER" && (
+            <>
+              <Link to="/owner/orders" style={navLinkStyle}>
+                📋 Orders
+              </Link>
+              <Link to="/create-restaurant">
+                <button
+                  style={{
+                    backgroundColor: "var(--primary-orange)",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "4px",
+                    fontWeight: "600",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  + Add Restaurant
+                </button>
+              </Link>
+            </>
+          )}
+          {role === "CUSTOMER" && (
+            <>
+              <Link to="/cart" style={navLinkStyle}>
+                🛒 Cart
+              </Link>
+              <Link to="/orders" style={navLinkStyle}>
+                📦 Orders
+              </Link>
+            </>
+          )}
+          <button
+            onClick={handleLogout}
+            style={{
+              backgroundColor: "transparent",
+              color: "var(--text-gray)",
+              border: "1px solid var(--border-light)",
+              padding: "8px 16px",
+              borderRadius: "4px",
+              fontWeight: "500",
+              fontSize: "13px",
+              cursor: "pointer",
+              marginLeft: "8px",
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </nav>
   );
