@@ -86,6 +86,14 @@ public class OwnerController {
         return ResponseEntity.ok(restaurant);
     }
 
+    // Delete restaurant
+    @DeleteMapping("/restaurants/{id}")
+    public ResponseEntity<Void> deleteRestaurant(@PathVariable UUID id) {
+        UUID userId = getCurrentUserId();
+        ownerService.deleteRestaurant(userId, id);
+        return ResponseEntity.noContent().build();
+    }
+
     // Get menu items for a specific restaurant
     @GetMapping("/restaurants/{id}/menu")
     public ResponseEntity<List<MenuItemResponse>> getRestaurantMenu(@PathVariable UUID id) {

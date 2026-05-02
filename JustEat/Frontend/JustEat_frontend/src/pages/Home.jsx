@@ -459,8 +459,6 @@ const Home = () => {
         {/* Recommendations Section */}
         {role === "CUSTOMER" && (
           <div className="mt-5">
-            <h4 className="fw-bold mb-3">✨ Recommended for You</h4>
-
             {recommendationsLoading && (
               <div className="text-center py-4">
                 <div

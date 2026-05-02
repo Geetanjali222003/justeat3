@@ -20,6 +20,7 @@ const Navbar = () => {
   const { logout, role } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [profile, setProfile] = useState(null);
   const dropdownRef = useRef(null);
 
@@ -77,10 +78,14 @@ const Navbar = () => {
         }}
       >
         {/* Logo */}
-        <Link to="/" style={{ textDecoration: "none" }}>
-          <div className="brand-logo" style={{ fontSize: "24px" }}>
-            <span className="orange">Just</span>
-            <span className="dark">Eat</span>
+        <Link to="/" className="text-decoration-none">
+          <div className="d-flex align-items-center gap-2">
+            <span
+              className="fs-3 fw-bold"
+              style={{ color: "var(--primary-orange)" }}
+            >
+              🍕 JustEat
+            </span>
           </div>
         </Link>
 
@@ -127,7 +132,10 @@ const Navbar = () => {
           )}
 
           {/* Profile Dropdown */}
-          <div ref={dropdownRef} style={{ position: "relative", marginLeft: "12px" }}>
+          <div
+            ref={dropdownRef}
+            style={{ position: "relative", marginLeft: "12px" }}
+          >
             <button
               onClick={() => setShowDropdown(!showDropdown)}
               style={{
@@ -135,7 +143,9 @@ const Navbar = () => {
                 height: "40px",
                 borderRadius: "50%",
                 border: "2px solid var(--primary-orange)",
-                backgroundColor: profile?.profileImageUrl ? "transparent" : "var(--primary-orange)",
+                backgroundColor: profile?.profileImageUrl
+                  ? "transparent"
+                  : "var(--primary-orange)",
                 color: "white",
                 fontSize: "14px",
                 fontWeight: "600",
@@ -210,8 +220,12 @@ const Navbar = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
-                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#f5f5f5")}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                    onMouseEnter={(e) =>
+                      (e.target.style.backgroundColor = "#f5f5f5")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.backgroundColor = "transparent")
+                    }
                   >
                     👤 My Profile
                   </button>
@@ -219,7 +233,7 @@ const Navbar = () => {
                   <button
                     onClick={() => {
                       setShowDropdown(false);
-                      handleLogout();
+                      setShowLogoutConfirm(true);
                     }}
                     style={{
                       width: "100%",
@@ -234,8 +248,12 @@ const Navbar = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
-                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#f5f5f5")}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                    onMouseEnter={(e) =>
+                      (e.target.style.backgroundColor = "#f5f5f5")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.backgroundColor = "transparent")
+                    }
                   >
                     🚪 Logout
                   </button>
@@ -263,6 +281,82 @@ const Navbar = () => {
           </button>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+          }}
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h5 style={{ marginBottom: "16px", fontWeight: "600" }}>
+              Confirm Logout
+            </h5>
+            <p style={{ color: "var(--text-gray)", marginBottom: "24px" }}>
+              Are you sure you want to logout?
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                style={{
+                  padding: "10px 20px",
+                  border: "1px solid var(--border-light)",
+                  backgroundColor: "white",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  handleLogout();
+                }}
+                style={{
+                  padding: "10px 20px",
+                  border: "none",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                }}
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

@@ -29,6 +29,9 @@ export const searchOwnerRestaurants = (keyword) =>
 export const updateRestaurantStatus = (publicId, status) =>
   api.put(`/owner/restaurants/${publicId}/status`, { status });
 
+export const deleteRestaurant = (publicId) =>
+  api.delete(`/owner/restaurants/${publicId}`);
+
 // Rating API
 export const submitRating = (restaurantId, rating) =>
   api.post("/customer/ratings", { restaurantId, rating });

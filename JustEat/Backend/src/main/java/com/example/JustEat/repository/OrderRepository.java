@@ -22,4 +22,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     // Find orders by restaurant owner, sorted by newest first
     List<Order> findByRestaurant_OwnerIdOrderByCreatedAtDesc(Long ownerId);
+    
+    // Check if restaurant has any orders
+    boolean existsByRestaurant(Restaurant restaurant);
 }

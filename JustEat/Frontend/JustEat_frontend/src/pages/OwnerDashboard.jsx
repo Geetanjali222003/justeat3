@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getMyRestaurants, searchOwnerRestaurants } from "../api/restaurantApi";
+import { getMyRestaurants, searchOwnerRestaurants, deleteRestaurant } from "../api/restaurantApi";
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
@@ -11,6 +11,8 @@ const OwnerDashboard = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchTimeout, setSearchTimeout] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const fetchRestaurants = useCallback(async (keyword = "") => {
     setLoading(true);
@@ -59,6 +61,20 @@ const OwnerDashboard = () => {
       fetchRestaurants(value);
     }, 500);
     setSearchTimeout(timeout);
+  };
+
+  const handleDelete = async (publicId, name) => {
+    setDeletingId(publicId);
+    try {
+      await deleteRestaurant(publicId);
+      setRestaurants((prev) => prev.filter((r) => r.publicId !== publicId));
+      toast.success(`${name} deleted successfully!`);
+      setConfirmDeleteId(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete restaurant");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -245,7 +261,8 @@ const OwnerDashboard = () => {
                     <div className="d-flex gap-2">
                       <button
                         onClick={() => navigate(`/restaurant/${r.publicId}`)}
-                        className="btn btn-outline-secondary btn-sm flex-fill"
+                        className="btn btn-outline-secondary btn-sm"
+                        style={{ flex: 1 }}
                       >
                         👁️ View
                       </button>
@@ -253,10 +270,39 @@ const OwnerDashboard = () => {
                         onClick={() =>
                           navigate(`/manage-restaurant/${r.publicId}`)
                         }
-                        className="btn btn-warning btn-sm flex-fill"
+                        className="btn btn-warning btn-sm"
+                        style={{ flex: 1 }}
                       >
                         ⚙️ Manage
                       </button>
+                    </div>
+                    {/* Delete Button */}
+                    <div className="mt-2">
+                      {confirmDeleteId === r.publicId ? (
+                        <div className="d-flex gap-2">
+                          <button
+                            onClick={() => handleDelete(r.publicId, r.name)}
+                            className="btn btn-danger btn-sm flex-fill"
+                            disabled={deletingId === r.publicId}
+                          >
+                            {deletingId === r.publicId ? "Deleting..." : "✓ Confirm Delete"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="btn btn-outline-secondary btn-sm flex-fill"
+                            disabled={deletingId === r.publicId}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteId(r.publicId)}
+                          className="btn btn-outline-danger btn-sm w-100"
+                        >
+                          🗑️ Delete Restaurant
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

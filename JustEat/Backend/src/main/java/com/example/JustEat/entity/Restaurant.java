@@ -65,12 +65,12 @@ public class Restaurant extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private RestaurantStatus status = RestaurantStatus.OPEN;
 
-    @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id ASC")
     @JsonIgnore
     private List<MenuItem> menuItems = new ArrayList<>();
 
-    @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<RestaurantRating> ratings = new ArrayList<>();
 

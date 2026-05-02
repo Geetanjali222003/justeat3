@@ -4,12 +4,16 @@ import com.example.JustEat.dto.response.MenuItemResponse;
 import com.example.JustEat.dto.response.RestaurantResponse;
 import com.example.JustEat.entity.MenuItem;
 import com.example.JustEat.entity.Restaurant;
+import com.example.JustEat.entity.UserPreference;
+import com.example.JustEat.exception.BadRequestException;
 import com.example.JustEat.exception.ForbiddenException;
 import com.example.JustEat.exception.NotFoundException;
 import com.example.JustEat.mapper.MenuItemMapper;
 import com.example.JustEat.mapper.RestaurantMapper;
 import com.example.JustEat.repository.MenuItemRepository;
+import com.example.JustEat.repository.OrderRepository;
 import com.example.JustEat.repository.RestaurantRepository;
+import com.example.JustEat.repository.UserPreferenceRepository;
 import com.example.JustEat.service.OwnerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +32,8 @@ public class OwnerServiceImpl implements OwnerService {
 
     private final MenuItemRepository menuItemRepository;
     private final RestaurantRepository restaurantRepository;
+    private final UserPreferenceRepository preferenceRepository;
+    private final OrderRepository orderRepository;
 
     @Override
     @Transactional
@@ -117,6 +123,37 @@ public class OwnerServiceImpl implements OwnerService {
         }
         
         return RestaurantMapper.toResponse(restaurant);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRestaurant(UUID ownerPublicId, UUID restaurantPublicId) {
+        log.info("Deleting restaurant {} for owner {}", restaurantPublicId, ownerPublicId);
+        
+        Restaurant restaurant = restaurantRepository.findByPublicId(restaurantPublicId)
+                .orElseThrow(() -> new NotFoundException("Restaurant not found"));
+        
+        // Validate ownership
+        if (!restaurant.getOwner().getPublicId().equals(ownerPublicId)) {
+            throw new ForbiddenException("Not authorized to delete this restaurant");
+        }
+        
+        // Check if there are any orders for this restaurant
+        boolean hasOrders = orderRepository.existsByRestaurant(restaurant);
+        if (hasOrders) {
+            throw new BadRequestException("Cannot delete restaurant with existing orders. Please contact support for assistance.");
+        }
+        
+        // Remove restaurant from all user preferences
+        List<UserPreference> preferences = preferenceRepository.findByFavouriteRestaurantsContaining(restaurant);
+        for (UserPreference preference : preferences) {
+            preference.getFavouriteRestaurants().remove(restaurant);
+            preferenceRepository.save(preference);
+        }
+        
+        // Delete the restaurant (cascade will delete ratings and menu items)
+        restaurantRepository.delete(restaurant);
+        log.info("Restaurant {} deleted successfully", restaurantPublicId);
     }
 
     @Override
