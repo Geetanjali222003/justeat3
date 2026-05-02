@@ -1,5 +1,6 @@
 package com.example.JustEat.repository;
 
+import com.example.JustEat.entity.MenuItem;
 import com.example.JustEat.entity.Restaurant;
 import com.example.JustEat.entity.User;
 import com.example.JustEat.entity.UserPreference;
@@ -21,4 +22,8 @@ public interface UserPreferenceRepository extends JpaRepository<UserPreference, 
     // Find all preferences that have this restaurant as favourite
     @Query("SELECT up FROM UserPreference up JOIN up.favouriteRestaurants r WHERE r = :restaurant")
     List<UserPreference> findByFavouriteRestaurantsContaining(@Param("restaurant") Restaurant restaurant);
+
+    // Find all preferences that have this menu item as favourite
+    @Query("SELECT up FROM UserPreference up JOIN up.favouriteFoods f WHERE f = :menuItem")
+    List<UserPreference> findByFavouriteFoodsContaining(@Param("menuItem") MenuItem menuItem);
 }

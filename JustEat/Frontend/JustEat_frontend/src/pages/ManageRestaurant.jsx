@@ -273,8 +273,8 @@ const ManageRestaurant = () => {
       await deleteMenuItem(publicId, itemId);
       setMenuItems((prev) => prev.filter((i) => i.id !== itemId));
       toast.success("Item deleted.");
-    } catch {
-      toast.error("Failed to delete item");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete item");
     } finally {
       setDeletingId(null);
       setConfirmDeleteId(null);

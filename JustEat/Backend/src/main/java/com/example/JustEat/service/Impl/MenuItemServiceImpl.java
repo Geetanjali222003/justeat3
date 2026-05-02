@@ -5,16 +5,21 @@ import com.example.JustEat.dto.request.UpdateMenuItemRequest;
 import com.example.JustEat.dto.response.MenuItemResponse;
 import com.example.JustEat.entity.MenuItem;
 import com.example.JustEat.entity.Restaurant;
+import com.example.JustEat.entity.UserPreference;
 import com.example.JustEat.exception.BadRequestException;
 import com.example.JustEat.exception.ForbiddenException;
 import com.example.JustEat.exception.NotFoundException;
 import com.example.JustEat.mapper.MenuItemMapper;
+import com.example.JustEat.repository.CartItemRepository;
 import com.example.JustEat.repository.MenuItemRepository;
+import com.example.JustEat.repository.OrderItemRepository;
 import com.example.JustEat.repository.RestaurantRepository;
+import com.example.JustEat.repository.UserPreferenceRepository;
 import com.example.JustEat.service.CloudinaryService;
 import com.example.JustEat.service.MenuItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -26,6 +31,9 @@ import java.util.UUID;
 public class MenuItemServiceImpl implements MenuItemService {
     private final RestaurantRepository restaurantRepository;
     private final MenuItemRepository menuItemRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CartItemRepository cartItemRepository;
+    private final UserPreferenceRepository preferenceRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -103,22 +111,35 @@ public class MenuItemServiceImpl implements MenuItemService {
     }
 
     @Override
+    @Transactional
     public void deleteMenuItem(UUID restaurantId, Long menuItemId, UUID userId) {
         Restaurant restaurant = restaurantRepository.findByPublicId(restaurantId).orElseThrow(()->new NotFoundException("Restaurant not found"));
         MenuItem menuItem = menuItemRepository.findById(menuItemId).orElseThrow(()-> new NotFoundException("Menu Item not found"));
-        if(!restaurant.getOwner().getPublicId().equals(userId))throw new ForbiddenException("Not authorized");
-        if(!menuItem.getRestaurant().getId().equals(restaurant.getId()))throw new BadRequestException("Menu item does not belong to this restaurant");
+        if(!restaurant.getOwner().getPublicId().equals(userId)) throw new ForbiddenException("Not authorized");
+        if(!menuItem.getRestaurant().getId().equals(restaurant.getId())) throw new BadRequestException("Menu item does not belong to this restaurant");
+
+        if (orderItemRepository.existsByMenuItem(menuItem)) {
+            throw new BadRequestException("Cannot delete this item because it already exists in placed orders.");
+        }
+
+        List<UserPreference> preferences = preferenceRepository.findByFavouriteFoodsContaining(menuItem);
+        for (UserPreference preference : preferences) {
+            preference.getFavouriteFoods().remove(menuItem);
+            preferenceRepository.save(preference);
+        }
+
+        cartItemRepository.deleteByMenuItem(menuItem);
         menuItemRepository.delete(menuItem);
     }
 
     @Override
     public List<MenuItemResponse> getMenu(UUID restaurantId) {
-        Restaurant restaurant = restaurantRepository.findByPublicId(restaurantId)
+        restaurantRepository.findByPublicId(restaurantId)
                 .orElseThrow(() -> new NotFoundException("Restaurant not found"));
         return menuItemRepository
                 .findByRestaurant_PublicIdAndIsAvailableTrue(restaurantId)
                 .stream()
-                .map(r -> MenuItemMapper.toResponse(r))
+                .map(MenuItemMapper::toResponse)
                 .toList();
     }
 }
