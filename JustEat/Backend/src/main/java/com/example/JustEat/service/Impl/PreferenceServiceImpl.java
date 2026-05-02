@@ -41,44 +41,77 @@ public class PreferenceServiceImpl implements PreferenceService {
     @Override
     @Transactional
     public PreferenceResponse savePreferences(PreferenceRequest request) {
-        // Get current user
-        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
-        UUID userId = UUID.fromString(userIdStr);
-        User user = userRepository.findByPublicId(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        try {
+            // Get current user
+            String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+            UUID userId = UUID.fromString(userIdStr);
+            log.info("=== Saving preferences for user: {} ===", userId);
+            
+            User user = userRepository.findByPublicId(userId)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
 
-        // Find existing preference or create new
-        UserPreference preference = preferenceRepository.findByUser(user)
-                .orElseGet(() -> {
-                    UserPreference newPref = new UserPreference();
-                    newPref.setUser(user);
-                    return newPref;
-                });
+            log.info("User found: {} (ID: {})", user.getEmail(), user.getId());
 
-        // Update preferences
-        if (request.getFavouriteCuisines() != null) {
-            preference.setFavouriteCuisines(request.getFavouriteCuisines());
+            // Find existing preference or create new
+            UserPreference preference = preferenceRepository.findByUser(user)
+                    .orElseGet(() -> {
+                        log.info("Creating new preference for user");
+                        UserPreference newPref = new UserPreference();
+                        newPref.setUser(user);
+                        return preferenceRepository.save(newPref); // Save immediately to get ID
+                    });
+
+            log.info("Preference entity ID: {}", preference.getId());
+
+            // Update cuisines
+            preference.getFavouriteCuisines().clear();
+            if (request.getFavouriteCuisines() != null && !request.getFavouriteCuisines().isEmpty()) {
+                log.info("Setting {} favourite cuisines: {}", request.getFavouriteCuisines().size(), request.getFavouriteCuisines());
+                preference.getFavouriteCuisines().addAll(request.getFavouriteCuisines());
+            }
+            
+            // Update dietary restrictions
+            preference.getDietaryRestrictions().clear();
+            if (request.getDietaryRestrictions() != null && !request.getDietaryRestrictions().isEmpty()) {
+                log.info("Setting {} dietary restrictions: {}", request.getDietaryRestrictions().size(), request.getDietaryRestrictions());
+                preference.getDietaryRestrictions().addAll(request.getDietaryRestrictions());
+            }
+
+            // Update favourite restaurants
+            preference.getFavouriteRestaurants().clear();
+            if (request.getRestaurantIds() != null && !request.getRestaurantIds().isEmpty()) {
+                log.info("Looking for {} restaurants with IDs: {}", request.getRestaurantIds().size(), request.getRestaurantIds());
+                List<Restaurant> restaurants = restaurantRepository.findByPublicIdIn(request.getRestaurantIds());
+                log.info("Found {} restaurants", restaurants.size());
+                if (!restaurants.isEmpty()) {
+                    preference.getFavouriteRestaurants().addAll(restaurants);
+                }
+            }
+
+            // Update favourite foods
+            preference.getFavouriteFoods().clear();
+            if (request.getFoodIds() != null && !request.getFoodIds().isEmpty()) {
+                log.info("Looking for {} foods with IDs: {}", request.getFoodIds().size(), request.getFoodIds());
+                List<MenuItem> foods = menuItemRepository.findByIdIn(request.getFoodIds());
+                log.info("Found {} foods", foods.size());
+                if (!foods.isEmpty()) {
+                    preference.getFavouriteFoods().addAll(foods);
+                }
+            }
+
+            // Save and flush to ensure immediate persistence
+            UserPreference saved = preferenceRepository.saveAndFlush(preference);
+            log.info("=== Preferences saved successfully with ID: {} ===", saved.getId());
+            log.info("Cuisines count: {}", saved.getFavouriteCuisines().size());
+            log.info("Dietary count: {}", saved.getDietaryRestrictions().size());
+            log.info("Restaurants count: {}", saved.getFavouriteRestaurants().size());
+            log.info("Foods count: {}", saved.getFavouriteFoods().size());
+
+            return toResponse(saved);
+        } catch (Exception e) {
+            log.error("Error saving preferences: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save preferences: " + e.getMessage(), e);
         }
-        if (request.getDietaryRestrictions() != null) {
-            preference.setDietaryRestrictions(request.getDietaryRestrictions());
-        }
-
-        // Update favourite restaurants
-        if (request.getRestaurantIds() != null && !request.getRestaurantIds().isEmpty()) {
-            List<Restaurant> restaurants = restaurantRepository.findByPublicIdIn(request.getRestaurantIds());
-            preference.setFavouriteRestaurants(restaurants);
-        }
-
-        // Update favourite foods
-        if (request.getFoodIds() != null && !request.getFoodIds().isEmpty()) {
-            List<MenuItem> foods = menuItemRepository.findByIdIn(request.getFoodIds());
-            preference.setFavouriteFoods(foods);
-        }
-
-        UserPreference saved = preferenceRepository.save(preference);
-        log.info("Preferences saved for user {}", userId);
-
-        return toResponse(saved);
     }
 
     @Override

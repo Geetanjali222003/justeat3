@@ -53,6 +53,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         )
                         .permitAll()
+                        // Profile endpoints - authenticated users
+                        .requestMatchers("/profile/**")
+                        .authenticated()
                         .requestMatchers("/cart/**")
                         .hasRole("CUSTOMER")
                         // Customer endpoints - customer only

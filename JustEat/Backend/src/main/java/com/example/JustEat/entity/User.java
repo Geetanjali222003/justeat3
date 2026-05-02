@@ -51,6 +51,12 @@ public class User extends BaseEntity {
     @NotNull
     private Location location;
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
+    @Column(name = "profile_image_public_id")
+    private String profileImagePublicId;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private UserPreference preference;

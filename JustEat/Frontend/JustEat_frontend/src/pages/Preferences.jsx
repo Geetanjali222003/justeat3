@@ -26,8 +26,9 @@ const Preferences = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [favouriteCuisine, setFavouriteCuisine] = useState("");
-  const [dietaryRestriction, setDietaryRestriction] = useState("");
+  // Changed to arrays to match backend DTO
+  const [favouriteCuisines, setFavouriteCuisines] = useState([]);
+  const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
   const [favouriteRestaurants, setFavouriteRestaurants] = useState([]);
   const [favouriteFoods, setFavouriteFoods] = useState([]);
 
@@ -42,10 +43,14 @@ const Preferences = () => {
         try {
           const prefRes = await getPreferences();
           const pref = prefRes.data || {};
-          setFavouriteCuisine(pref.favouriteCuisine || "");
-          setDietaryRestriction(pref.dietaryRestriction || "");
-          setFavouriteRestaurants(pref.favouriteRestaurants || []);
-          setFavouriteFoods(pref.favouriteFoods || []);
+          setFavouriteCuisines(pref.favouriteCuisines || []);
+          setDietaryRestrictions(pref.dietaryRestrictions || []);
+          // Map restaurant objects to IDs
+          setFavouriteRestaurants(
+            (pref.favouriteRestaurants || []).map((r) => r.publicId)
+          );
+          // Map food objects to IDs
+          setFavouriteFoods((pref.favouriteFoods || []).map((f) => f.id));
         } catch {
           // No preferences yet
         }
@@ -80,6 +85,22 @@ const Preferences = () => {
     fetchData();
   }, []);
 
+  const handleCuisineToggle = (cuisine) => {
+    setFavouriteCuisines((prev) =>
+      prev.includes(cuisine)
+        ? prev.filter((c) => c !== cuisine)
+        : [...prev, cuisine]
+    );
+  };
+
+  const handleDietaryToggle = (dietary) => {
+    setDietaryRestrictions((prev) =>
+      prev.includes(dietary)
+        ? prev.filter((d) => d !== dietary)
+        : [...prev, dietary]
+    );
+  };
+
   const handleRestaurantToggle = (publicId) => {
     setFavouriteRestaurants((prev) =>
       prev.includes(publicId)
@@ -100,14 +121,16 @@ const Preferences = () => {
     setSaving(true);
     try {
       await savePreferences({
-        favouriteCuisine,
-        dietaryRestriction,
-        favouriteRestaurants,
-        favouriteFoods,
+        favouriteCuisines,
+        dietaryRestrictions,
+        restaurantIds: favouriteRestaurants,
+        foodIds: favouriteFoods,
       });
-      toast.success("Preferences saved");
-    } catch {
-      toast.error("Failed to save preferences");
+      toast.success("Preferences saved successfully!");
+      setTimeout(() => navigate("/"), 1500);
+    } catch (err) {
+      console.error("Save error:", err);
+      toast.error(err.response?.data?.message || "Failed to save preferences");
     } finally {
       setSaving(false);
     }
@@ -135,42 +158,50 @@ const Preferences = () => {
         ) : (
           <div className="card border-0 shadow-sm">
             <div className="card-body">
-              {/* Favourite Cuisine */}
+              {/* Favourite Cuisines */}
               <div className="mb-4">
                 <label className="form-label fw-semibold">
-                  Favourite Cuisine
+                  Favourite Cuisines (Select multiple)
                 </label>
-                <select
-                  className="form-select"
-                  value={favouriteCuisine}
-                  onChange={(e) => setFavouriteCuisine(e.target.value)}
-                >
-                  <option value="">Select cuisine</option>
+                <div className="d-flex flex-wrap gap-2">
                   {CUISINES.map((c) => (
-                    <option key={c} value={c}>
-                      {c.replace(/_/g, " ")}
-                    </option>
+                    <div key={c} className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id={`cuisine-${c}`}
+                        checked={favouriteCuisines.includes(c)}
+                        onChange={() => handleCuisineToggle(c)}
+                      />
+                      <label className="form-check-label" htmlFor={`cuisine-${c}`}>
+                        {c.replace(/_/g, " ")}
+                      </label>
+                    </div>
                   ))}
-                </select>
+                </div>
               </div>
 
-              {/* Dietary Restriction */}
+              {/* Dietary Restrictions */}
               <div className="mb-4">
                 <label className="form-label fw-semibold">
-                  Dietary Restriction
+                  Dietary Restrictions (Select multiple)
                 </label>
-                <select
-                  className="form-select"
-                  value={dietaryRestriction}
-                  onChange={(e) => setDietaryRestriction(e.target.value)}
-                >
-                  <option value="">Select dietary preference</option>
+                <div className="d-flex flex-wrap gap-2">
                   {DIETARY.map((d) => (
-                    <option key={d} value={d}>
-                      {d.replace(/_/g, " ")}
-                    </option>
+                    <div key={d} className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id={`dietary-${d}`}
+                        checked={dietaryRestrictions.includes(d)}
+                        onChange={() => handleDietaryToggle(d)}
+                      />
+                      <label className="form-check-label" htmlFor={`dietary-${d}`}>
+                        {d.replace(/_/g, " ")}
+                      </label>
+                    </div>
                   ))}
-                </select>
+                </div>
               </div>
 
               {/* Favourite Restaurants */}

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getRestaurant, submitRating } from "../api/restaurantApi";
-import { getMenu } from "../api/menuApi";
+import { getRestaurant, getOwnerRestaurant, submitRating } from "../api/restaurantApi";
+import { getMenu, getOwnerMenu } from "../api/menuApi";
 import { addToCart } from "../api/cartApi";
 import { useAuth } from "../context/AuthContext";
 
@@ -23,16 +23,27 @@ const RestaurantDetail = () => {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([getRestaurant(publicId), getMenu(publicId)])
+    // Use owner endpoints if user is OWNER, customer endpoints if CUSTOMER
+    const restaurantApi = role === "OWNER" ? getOwnerRestaurant : getRestaurant;
+    const menuApi = role === "OWNER" ? getOwnerMenu : getMenu;
+
+    Promise.all([restaurantApi(publicId), menuApi(publicId)])
       .then(([rRes, mRes]) => {
         setRestaurant(rRes.data);
         setMenu(mRes.data);
       })
-      .catch(() => setError("Failed to load restaurant details."))
+      .catch((err) => {
+        console.error("Failed to load restaurant:", err);
+        setError("Failed to load restaurant details.");
+      })
       .finally(() => setLoading(false));
-  }, [publicId]);
+  }, [publicId, role]);
 
   const handleAddToCart = async (menuItemId) => {
+    if (role === "OWNER") {
+      toast.error("Owners cannot add items to cart");
+      return;
+    }
     setAddingItemId(menuItemId);
     try {
       await addToCart(menuItemId, 1);
@@ -45,6 +56,10 @@ const RestaurantDetail = () => {
   };
 
   const handleSubmitRating = async () => {
+    if (role === "OWNER") {
+      toast.error("Owners cannot rate restaurants");
+      return;
+    }
     setRatingSubmitting(true);
     try {
       await submitRating(publicId, parseInt(selectedRating));

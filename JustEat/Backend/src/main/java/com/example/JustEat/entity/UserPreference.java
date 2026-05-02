@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "preferences")
+@Table(name = "user_preference")
 @Getter
 @Setter
 public class UserPreference extends BaseEntity {
@@ -20,30 +20,30 @@ public class UserPreference extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @ElementCollection
-    @CollectionTable(name = "preference_cuisines", joinColumns = @JoinColumn(name = "preference_id"))
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_preference_favourite_cuisines", joinColumns = @JoinColumn(name = "user_preference_id"))
     @Enumerated(EnumType.STRING)
-    @Column(name = "cuisine")
+    @Column(name = "cuisine_type")
     private List<CuisineType> favouriteCuisines = new ArrayList<>();
 
-    @ElementCollection
-    @CollectionTable(name = "preference_dietary", joinColumns = @JoinColumn(name = "preference_id"))
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_preference_dietary_restrictions", joinColumns = @JoinColumn(name = "user_preference_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "dietary_restriction")
     private List<DietaryRestriction> dietaryRestrictions = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
-            name = "preference_restaurants",
-            joinColumns = @JoinColumn(name = "preference_id"),
+            name = "user_preference_favourite_restaurants",
+            joinColumns = @JoinColumn(name = "user_preference_id"),
             inverseJoinColumns = @JoinColumn(name = "restaurant_id")
     )
     private List<Restaurant> favouriteRestaurants = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
-            name = "preference_foods",
-            joinColumns = @JoinColumn(name = "preference_id"),
+            name = "user_preference_favourite_foods",
+            joinColumns = @JoinColumn(name = "user_preference_id"),
             inverseJoinColumns = @JoinColumn(name = "food_id")
     )
     private List<MenuItem> favouriteFoods = new ArrayList<>();

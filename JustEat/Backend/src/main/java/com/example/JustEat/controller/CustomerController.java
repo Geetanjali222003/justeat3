@@ -3,9 +3,13 @@ package com.example.JustEat.controller;
 import com.example.JustEat.dto.request.PreferenceRequest;
 import com.example.JustEat.dto.request.RatingRequest;
 import com.example.JustEat.dto.response.*;
+import com.example.JustEat.entity.MenuItem;
+import com.example.JustEat.entity.UserPreference;
+import com.example.JustEat.enums.DietaryRestriction;
 import com.example.JustEat.enums.Location;
 import com.example.JustEat.mapper.MenuItemMapper;
 import com.example.JustEat.repository.MenuItemRepository;
+import com.example.JustEat.repository.UserPreferenceRepository;
 import com.example.JustEat.service.PreferenceService;
 import com.example.JustEat.service.RatingService;
 import com.example.JustEat.service.RestaurantService;
@@ -18,7 +22,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/customer")
@@ -30,6 +36,7 @@ public class CustomerController {
     private final RestaurantService restaurantService;
     private final PreferenceService preferenceService;
     private final MenuItemRepository menuItemRepository;
+    private final UserPreferenceRepository preferenceRepository;
 
     @PostMapping("/ratings")
     public ResponseEntity<String> saveRating(@Valid @RequestBody RatingRequest request) {
@@ -65,15 +72,37 @@ public class CustomerController {
         return ResponseEntity.ok(restaurant);
     }
 
-    // Get menu items for a restaurant
+    // Get menu items for a restaurant (filtered by user dietary preferences)
     @GetMapping("/restaurants/{publicId}/menu")
     public ResponseEntity<List<MenuItemResponse>> getRestaurantMenu(@PathVariable UUID publicId) {
-        List<MenuItemResponse> menuItems = menuItemRepository
-                .findByRestaurant_PublicIdAndIsAvailableTrue(publicId)
-                .stream()
+        List<MenuItem> menuItems = menuItemRepository
+                .findByRestaurant_PublicIdAndIsAvailableTrue(publicId);
+        
+        // Filter by dietary restrictions if user has preferences
+        try {
+            UUID userId = getCurrentUserId();
+            Optional<UserPreference> preferenceOpt = preferenceRepository.findByUserPublicId(userId);
+            
+            if (preferenceOpt.isPresent()) {
+                UserPreference preference = preferenceOpt.get();
+                List<DietaryRestriction> dietary = preference.getDietaryRestrictions();
+                
+                // If user has dietary restrictions, filter menu
+                if (dietary != null && !dietary.isEmpty()) {
+                    menuItems = menuItems.stream()
+                        .filter(item -> dietary.contains(item.getDietaryRestriction()))
+                        .collect(Collectors.toList());
+                }
+            }
+        } catch (Exception e) {
+            // If no preferences, show all items
+        }
+        
+        return ResponseEntity.ok(
+            menuItems.stream()
                 .map(MenuItemMapper::toResponse)
-                .toList();
-        return ResponseEntity.ok(menuItems);
+                .toList()
+        );
     }
 
     @GetMapping("/most-ordered")
