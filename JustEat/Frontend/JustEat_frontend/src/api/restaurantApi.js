@@ -1,12 +1,18 @@
 import api from "./axiosConfig";
 
+// Customer Restaurant APIs
 export const getRestaurants = (location) =>
-  api.get("/restaurants", { params: location ? { location } : {} });
+  api.get("/customer/restaurants", { params: location ? { location } : {} });
 
-export const getRestaurant = (publicId) => api.get(`/restaurants/${publicId}`);
+export const getRestaurant = (publicId) =>
+  api.get(`/customer/restaurants/${publicId}`);
 
+export const searchRestaurants = (keyword) =>
+  api.get("/customer/restaurants/search", { params: { keyword } });
+
+// Owner Restaurant APIs
 export const createRestaurant = (formData) =>
-  api.post("/restaurants", formData, {
+  api.post("/owner/restaurants", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -14,8 +20,14 @@ export const createRestaurant = (formData) =>
 
 export const getMyRestaurants = () => api.get("/owner/restaurants");
 
+export const getOwnerRestaurant = (publicId) =>
+  api.get(`/owner/restaurants/${publicId}`);
+
 export const searchOwnerRestaurants = (keyword) =>
   api.get("/owner/restaurants/search", { params: { keyword } });
+
+export const updateRestaurantStatus = (publicId, status) =>
+  api.put(`/owner/restaurants/${publicId}/status`, { status });
 
 // Rating API
 export const submitRating = (restaurantId, rating) =>

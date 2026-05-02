@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getCart, removeCartItem, clearCart } from "../api/cartApi";
+import { getCart, removeCartItem, clearCart, updateCartItemQuantity } from "../api/cartApi";
 import { placeOrder } from "../api/orderApi";
 
 const CartPage = () => {
@@ -10,9 +11,9 @@ const CartPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
   const [clearing, setClearing] = useState(false);
   const [placing, setPlacing] = useState(false);
-  const [success, setSuccess] = useState("");
 
   const fetchCart = async () => {
     setLoading(true);
@@ -23,6 +24,12 @@ const CartPage = () => {
     } catch (err) {
       if (err.response?.status === 404) {
         setCart({ items: [], totalAmount: 0 });
+      } else if (err.response?.status === 403) {
+        toast.error("Access denied. Please login again.");
+        setError("Access denied.");
+      } else if (err.response?.status === 500) {
+        toast.error("Server error. Please try again later.");
+        setError("Server error.");
       } else {
         setError("Failed to load cart.");
       }
@@ -39,11 +46,28 @@ const CartPage = () => {
     setRemovingId(cartItemId);
     try {
       await removeCartItem(cartItemId);
+      toast.success("Item removed");
       await fetchCart();
     } catch {
-      setError("Failed to remove item.");
+      toast.error("Failed to remove item.");
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const handleUpdateQuantity = async (cartItemId, newQuantity) => {
+    if (newQuantity < 1) {
+      handleRemove(cartItemId);
+      return;
+    }
+    setUpdatingId(cartItemId);
+    try {
+      await updateCartItemQuantity(cartItemId, newQuantity);
+      await fetchCart();
+    } catch {
+      toast.error("Failed to update quantity.");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -52,8 +76,9 @@ const CartPage = () => {
     try {
       await clearCart();
       setCart({ items: [], totalAmount: 0 });
+      toast.success("Cart cleared");
     } catch {
-      setError("Failed to clear cart.");
+      toast.error("Failed to clear cart.");
     } finally {
       setClearing(false);
     }
@@ -62,14 +87,15 @@ const CartPage = () => {
   const handlePlaceOrder = async () => {
     setPlacing(true);
     setError("");
-    setSuccess("");
     try {
       await placeOrder();
-      setSuccess("Order placed successfully!");
+      toast.success("Order placed successfully!");
       setCart({ items: [], totalAmount: 0 });
       setTimeout(() => navigate("/orders"), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to place order.");
+      const msg = err.response?.data?.message || "Failed to place order.";
+      toast.error(msg);
+      setError(msg);
     } finally {
       setPlacing(false);
     }
@@ -100,9 +126,8 @@ const CartPage = () => {
           </div>
         )}
 
-        {/* Alerts */}
+        {/* Error Alert */}
         {error && <div className="alert alert-danger">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
 
         {/* Empty State */}
         {!loading && isEmpty && (

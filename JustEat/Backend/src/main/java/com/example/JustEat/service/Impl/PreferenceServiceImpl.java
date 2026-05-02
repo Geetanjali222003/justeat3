@@ -83,9 +83,18 @@ public class PreferenceServiceImpl implements PreferenceService {
 
     @Override
     public PreferenceResponse getPreferences(UUID userId) {
-        UserPreference preference = preferenceRepository.findByUserPublicId(userId)
-                .orElseThrow(() -> new NotFoundException("Preferences not found for user"));
-        return toResponse(preference);
+        Optional<UserPreference> preferenceOpt = preferenceRepository.findByUserPublicId(userId);
+        if (preferenceOpt.isEmpty()) {
+            // Return empty preferences if none exist
+            return PreferenceResponse.builder()
+                    .userId(userId)
+                    .favouriteCuisines(List.of())
+                    .dietaryRestrictions(List.of())
+                    .favouriteRestaurants(List.of())
+                    .favouriteFoods(List.of())
+                    .build();
+        }
+        return toResponse(preferenceOpt.get());
     }
 
     @Override

@@ -22,13 +22,24 @@ const OwnerDashboard = () => {
       } else {
         res = await getMyRestaurants();
       }
+      // Debug: Log API response
+      console.log("API response:", res.data);
       setRestaurants(res.data || []);
     } catch (err) {
-      console.log(err.response);
-      const msg =
-        err.response?.data?.message || "Failed to load restaurant data";
-      setError(msg);
-      toast.error(msg);
+      // Debug: Log full error response
+      console.log("API Error:", err.response);
+
+      // Handle 500 server error specifically
+      if (err.response?.status === 500) {
+        const msg = "Server error. Please try again later.";
+        setError(msg);
+        toast.error(msg);
+      } else {
+        const msg =
+          err.response?.data?.message || "Failed to load restaurant data";
+        setError(msg);
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -100,7 +111,7 @@ const OwnerDashboard = () => {
             <div className="spinner-border text-warning" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
-            <p className="text-muted mt-2">Loading...</p>
+            <p className="text-muted mt-2">Loading restaurants...</p>
           </div>
         )}
 

@@ -3,6 +3,7 @@ package com.example.JustEat.entity;
 import com.example.JustEat.enums.CuisineType;
 import com.example.JustEat.enums.Location;
 import com.example.JustEat.enums.RestaurantStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,7 +39,7 @@ public class Restaurant extends BaseEntity{
     private Location location;
 
     @NotNull(message = "Cuisine type is required")
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "restaurant_cuisines",
             joinColumns = @JoinColumn(name = "restaurant_id")
@@ -57,6 +58,7 @@ public class Restaurant extends BaseEntity{
     @NotNull(message = "Restaurant must have an owner")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
+    @JsonIgnore
     private User owner;
 
     @NotNull
@@ -65,9 +67,11 @@ public class Restaurant extends BaseEntity{
 
     @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY)
     @OrderBy("id ASC")
+    @JsonIgnore
     private List<MenuItem> menuItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<RestaurantRating> ratings = new ArrayList<>();
 
     @PrePersist

@@ -16,6 +16,7 @@ public class CartMapper {
                 .items(
                         cart.getItems().stream()
                                 .map(item -> CartItemResponse.builder()
+                                        .id(item.getId())
                                         .menuItemId(item.getMenuItem().getId())
                                         .name(item.getMenuItem().getName())
                                         .price(item.getPrice())

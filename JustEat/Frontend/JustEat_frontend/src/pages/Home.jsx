@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
@@ -7,6 +7,7 @@ import {
   getMostOrdered,
   getSpecials,
   getRecommendations,
+  searchRestaurants,
 } from "../api/restaurantApi";
 import { addToCart } from "../api/cartApi";
 import { useAuth } from "../context/AuthContext";
@@ -14,11 +15,13 @@ import { useAuth } from "../context/AuthContext";
 const LOCATIONS = ["ALL", "NOIDA", "DELHI", "GURGAON"];
 
 const Home = () => {
-  const { userLocation, role, user } = useAuth();
+  const { userLocation, role, userId } = useAuth();
   const [restaurants, setRestaurants] = useState([]);
   const [location, setLocation] = useState(userLocation || "ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTimeout, setSearchTimeout] = useState(null);
 
   // Most Ordered
   const [mostOrdered, setMostOrdered] = useState([]);
@@ -33,14 +36,41 @@ const Home = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchRestaurants = useCallback(async (loc, keyword = "") => {
     setLoading(true);
     setError("");
-    getRestaurants(location === "ALL" ? null : location)
-      .then((res) => setRestaurants(res.data))
-      .catch(() => setError("Failed to load restaurants."))
-      .finally(() => setLoading(false));
-  }, [location]);
+    try {
+      let res;
+      if (keyword.trim()) {
+        res = await searchRestaurants(keyword);
+      } else {
+        res = await getRestaurants(loc === "ALL" ? null : loc);
+      }
+      setRestaurants(res.data || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load restaurants.");
+      toast.error("Failed to load restaurants");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRestaurants(location, searchTerm);
+  }, [location, fetchRestaurants]);
+
+  // Debounced search
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    const timeout = setTimeout(() => {
+      fetchRestaurants(location, value);
+    }, 500);
+    setSearchTimeout(timeout);
+  };
 
   useEffect(() => {
     if (role === "CUSTOMER") {
@@ -59,9 +89,9 @@ const Home = () => {
         .finally(() => setSpecialsLoading(false));
 
       // Recommendations
-      if (user?.id || user?.publicId) {
+      if (userId) {
         setRecommendationsLoading(true);
-        getRecommendations(user.id || user.publicId)
+        getRecommendations(userId)
           .then((res) => setRecommendations(res.data || []))
           .catch(() => setRecommendations([]))
           .finally(() => setRecommendationsLoading(false));
@@ -69,7 +99,7 @@ const Home = () => {
         setRecommendationsLoading(false);
       }
     }
-  }, [role, user]);
+  }, [role, userId]);
 
   const handleAddToCart = async (menuItemId) => {
     setAddingItemId(menuItemId);
@@ -102,12 +132,29 @@ const Home = () => {
           <p className="text-muted small mb-0">Discover the best food around</p>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-4">
+          <div className="input-group">
+            <span className="input-group-text bg-white border-end-0">🔍</span>
+            <input
+              type="text"
+              className="form-control border-start-0"
+              placeholder="Search restaurants..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
         {/* Location Filter */}
         <div className="d-flex gap-2 flex-wrap mb-4">
           {LOCATIONS.map((loc) => (
             <button
               key={loc}
-              onClick={() => setLocation(loc)}
+              onClick={() => {
+                setLocation(loc);
+                setSearchTerm("");
+              }}
               className={`btn btn-sm ${
                 location === loc ? "btn-orange" : "btn-outline-secondary"
               }`}

@@ -14,5 +14,8 @@ public interface OwnerService {
     List<RestaurantResponse> getOwnerRestaurants(UUID ownerPublicId);
     List<RestaurantResponse> searchOwnerRestaurants(UUID ownerPublicId, String keyword);
     RestaurantResponse getOwnerRestaurantById(UUID ownerPublicId, UUID restaurantPublicId);
+    
+    // Menu methods
+    List<MenuItemResponse> getRestaurantMenu(UUID ownerPublicId, UUID restaurantPublicId);
 }
 

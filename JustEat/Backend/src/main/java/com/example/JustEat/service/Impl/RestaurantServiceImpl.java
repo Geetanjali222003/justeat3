@@ -15,6 +15,7 @@ import com.example.JustEat.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -26,7 +27,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final CloudinaryService cloudinaryService;
+    
     @Override
+    @Transactional
     public RestaurantResponse createRestaurant(CreateRestaurantRequest request, MultipartFile image) {
         //get current user from jwt
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -53,6 +56,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<RestaurantResponse> getAllRestaurants(Location location) {
         List<Restaurant> restaurants;
         if(location!=null){
@@ -69,6 +73,8 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public RestaurantResponse getRestaurant(UUID publicId){
         Restaurant restaurant = restaurantRepository.findByPublicId(publicId)
                 .orElseThrow(()-> new NotFoundException("Restaurant not found"));
@@ -83,6 +89,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<RestaurantResponse> getMyRestaurants() {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID ownerId = UUID.fromString(userIdStr);

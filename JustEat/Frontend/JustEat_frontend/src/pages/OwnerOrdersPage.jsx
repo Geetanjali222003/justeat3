@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import { getOwnerOrders, updateOrderStatus } from "../api/orderApi";
 
@@ -11,7 +12,6 @@ const OwnerOrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
-  const [successMsg, setSuccessMsg] = useState("");
   const intervalRef = useRef(null);
 
   const fetchOrders = async (showLoading = false) => {
@@ -48,11 +48,12 @@ const OwnerOrdersPage = () => {
     setError("");
     try {
       await updateOrderStatus(publicId, newStatus);
-      setSuccessMsg("Status updated!");
-      setTimeout(() => setSuccessMsg(""), 2000);
+      toast.success("Status updated!");
       await fetchOrders(false);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update status");
+      const msg = err.response?.data?.message || "Failed to update status";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setUpdatingId(null);
     }
@@ -96,8 +97,7 @@ const OwnerOrdersPage = () => {
           </span>
         </div>
 
-        {/* Alerts */}
-        {successMsg && <div className="alert alert-success">{successMsg}</div>}
+        {/* Error Alert */}
         {error && <div className="alert alert-danger">{error}</div>}
 
         {/* Loading */}

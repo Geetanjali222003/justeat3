@@ -66,6 +66,7 @@ public class OwnerServiceImpl implements OwnerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<RestaurantResponse> getOwnerRestaurants(UUID ownerPublicId) {
         log.info("Fetching restaurants for owner {}", ownerPublicId);
         
@@ -82,6 +83,7 @@ public class OwnerServiceImpl implements OwnerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<RestaurantResponse> searchOwnerRestaurants(UUID ownerPublicId, String keyword) {
         log.info("Searching restaurants for owner {} with keyword: {}", ownerPublicId, keyword);
         
@@ -102,6 +104,7 @@ public class OwnerServiceImpl implements OwnerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public RestaurantResponse getOwnerRestaurantById(UUID ownerPublicId, UUID restaurantPublicId) {
         log.info("Fetching restaurant {} for owner {}", restaurantPublicId, ownerPublicId);
         
@@ -114,6 +117,31 @@ public class OwnerServiceImpl implements OwnerService {
         }
         
         return RestaurantMapper.toResponse(restaurant);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MenuItemResponse> getRestaurantMenu(UUID ownerPublicId, UUID restaurantPublicId) {
+        log.info("Fetching menu for restaurant {} by owner {}", restaurantPublicId, ownerPublicId);
+        
+        Restaurant restaurant = restaurantRepository.findByPublicId(restaurantPublicId)
+                .orElseThrow(() -> new NotFoundException("Restaurant not found"));
+        
+        // Validate ownership
+        if (!restaurant.getOwner().getPublicId().equals(ownerPublicId)) {
+            throw new ForbiddenException("Not authorized to view this restaurant's menu");
+        }
+        
+        List<MenuItem> menuItems = menuItemRepository.findByRestaurant(restaurant);
+        
+        if (menuItems == null || menuItems.isEmpty()) {
+            log.info("No menu items found for restaurant {}", restaurantPublicId);
+            return Collections.emptyList();
+        }
+        
+        return menuItems.stream()
+                .map(MenuItemMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }
 

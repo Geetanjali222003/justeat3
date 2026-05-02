@@ -1,6 +1,7 @@
 package com.example.JustEat.controller;
 
 import com.example.JustEat.dto.request.AddToCartRequest;
+import com.example.JustEat.dto.request.UpdateCartItemRequest;
 import com.example.JustEat.dto.response.CartResponse;
 import com.example.JustEat.service.CartService;
 import jakarta.validation.Valid;
@@ -36,6 +37,16 @@ public class CartController {
     @GetMapping
     public ResponseEntity<CartResponse> getCart() {
         return ResponseEntity.ok(cartService.getCart());
+    }
+
+    // 🔄 Update item quantity
+    @PutMapping("/item/{id}")
+    public ResponseEntity<String> updateQuantity(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateCartItemRequest request
+    ) {
+        cartService.updateQuantity(id, request.getQuantity());
+        return ResponseEntity.ok("Quantity updated");
     }
 
     // ❌ Remove item

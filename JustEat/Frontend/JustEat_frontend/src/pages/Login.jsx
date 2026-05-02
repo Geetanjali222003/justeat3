@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
@@ -18,11 +19,23 @@ const Login = () => {
     setError("");
     setLoading(true);
     try {
-      await login(form);
+      const res = await login(form);
+      const userRole = res.data?.role || localStorage.getItem("role");
+      toast.success("Login successful!");
+
+      // Role-based redirect
       const next = searchParams.get("next");
-      navigate(next ? `/${next}` : "/");
+      if (next) {
+        navigate(`/${next}`);
+      } else if (userRole === "OWNER") {
+        navigate("/owner-dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password.");
+      const msg = err.response?.data?.message || "Invalid email or password.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ package com.example.JustEat.entity;
 import com.example.JustEat.enums.Gender;
 import com.example.JustEat.enums.Location;
 import com.example.JustEat.enums.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class User extends BaseEntity {
     
     @Column(nullable = false)
     @NotBlank
+    @JsonIgnore
     private String passwordHash;
     
     @Enumerated(EnumType.STRING)
@@ -50,6 +52,7 @@ public class User extends BaseEntity {
     private Location location;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private UserPreference preference;
 
     @PrePersist

@@ -3,12 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import {
-  getMenu,
+  getOwnerMenu,
   addMenuItem,
   updateMenuItem,
   deleteMenuItem,
 } from "../api/menuApi";
-import { getRestaurant, markAsSpecial, markAsDeal } from "../api/restaurantApi";
+import { markAsSpecial, markAsDeal } from "../api/restaurantApi";
+import api from "../api/axiosConfig";
 
 const CUISINE_TYPES = [
   "INDIAN",
@@ -200,7 +201,10 @@ const ManageRestaurant = () => {
   const [dealTogglingId, setDealTogglingId] = useState(null);
 
   useEffect(() => {
-    Promise.all([getRestaurant(publicId), getMenu(publicId)])
+    Promise.all([
+      api.get(`/owner/restaurants/${publicId}`),
+      getOwnerMenu(publicId),
+    ])
       .then(([rRes, mRes]) => {
         setRestaurant(rRes.data);
         setMenuItems(mRes.data);

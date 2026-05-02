@@ -1,17 +1,25 @@
 import api from "./axiosConfig";
 
-export const getMenu = (restaurantId) =>
-  api.get(`/restaurants/${restaurantId}/menu`);
+// Customer: Get menu items for a restaurant
+export const getMenu = (restaurantPublicId) =>
+  api.get(`/customer/restaurants/${restaurantPublicId}/menu`);
 
-export const addMenuItem = (restaurantId, formData) =>
-  api.post(`/restaurants/${restaurantId}/menu`, formData, {
+// Owner: Menu Management
+export const getOwnerMenu = (restaurantPublicId) =>
+  api.get(`/owner/restaurants/${restaurantPublicId}/menu`);
+
+export const addMenuItem = (restaurantPublicId, formData) =>
+  api.post(`/owner/restaurants/${restaurantPublicId}/menu`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 
-export const updateMenuItem = (restaurantId, menuItemId, data) =>
-  api.patch(`/restaurants/${restaurantId}/menu/${menuItemId}`, data);
+export const updateMenuItem = (restaurantPublicId, menuItemId, data) =>
+  api.patch(
+    `/owner/restaurants/${restaurantPublicId}/menu/${menuItemId}`,
+    data,
+  );
 
-export const deleteMenuItem = (restaurantId, menuItemId) =>
-  api.delete(`/restaurants/${restaurantId}/menu/${menuItemId}`);
+export const deleteMenuItem = (restaurantPublicId, menuItemId) =>
+  api.delete(`/owner/restaurants/${restaurantPublicId}/menu/${menuItemId}`);

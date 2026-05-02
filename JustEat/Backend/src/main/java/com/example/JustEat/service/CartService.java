@@ -6,4 +6,5 @@ public interface  CartService {
     CartResponse getCart();
     void removeItem(Long cartItemId);
     void clearCart();
+    void updateQuantity(Long cartItemId, int quantity);
 }

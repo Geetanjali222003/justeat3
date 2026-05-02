@@ -15,19 +15,32 @@ import java.util.UUID;
 
 @Repository
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
-    List<Restaurant> findByLocationAndStatus(Location location, RestaurantStatus status);
-    List<Restaurant> findByStatus(RestaurantStatus status);
-    Optional<Restaurant> findByPublicId(UUID publicId);
-    List<Restaurant> findByOwnerPublicId(UUID ownerPublicId);
-    List<Restaurant> findByOwnerId(Long ownerId);
-    List<Restaurant> findByPublicIdIn(List<UUID> publicIds);
+    
+    // Queries with eager fetch for cuisineTypes to avoid LazyInitializationException
+    @Query("SELECT DISTINCT r FROM Restaurant r LEFT JOIN FETCH r.cuisineTypes WHERE r.location = :location AND r.status = :status")
+    List<Restaurant> findByLocationAndStatus(@Param("location") Location location, @Param("status") RestaurantStatus status);
+    
+    @Query("SELECT DISTINCT r FROM Restaurant r LEFT JOIN FETCH r.cuisineTypes WHERE r.status = :status")
+    List<Restaurant> findByStatus(@Param("status") RestaurantStatus status);
+    
+    @Query("SELECT DISTINCT r FROM Restaurant r LEFT JOIN FETCH r.cuisineTypes WHERE r.publicId = :publicId")
+    Optional<Restaurant> findByPublicId(@Param("publicId") UUID publicId);
+    
+    @Query("SELECT DISTINCT r FROM Restaurant r LEFT JOIN FETCH r.cuisineTypes WHERE r.owner.publicId = :ownerPublicId")
+    List<Restaurant> findByOwnerPublicId(@Param("ownerPublicId") UUID ownerPublicId);
+    
+    @Query("SELECT DISTINCT r FROM Restaurant r LEFT JOIN FETCH r.cuisineTypes WHERE r.owner.id = :ownerId")
+    List<Restaurant> findByOwnerId(@Param("ownerId") Long ownerId);
+    
+    @Query("SELECT DISTINCT r FROM Restaurant r LEFT JOIN FETCH r.cuisineTypes WHERE r.publicId IN :publicIds")
+    List<Restaurant> findByPublicIdIn(@Param("publicIds") List<UUID> publicIds);
 
     // Find restaurants by cuisine types for recommendations
     @Query("SELECT DISTINCT r FROM Restaurant r JOIN r.cuisineTypes c WHERE c IN :cuisines AND r.status = 'OPEN'")
     List<Restaurant> findByCuisineTypesIn(@Param("cuisines") List<CuisineType> cuisines);
 
     // Search owner's restaurants by keyword (name or location)
-    @Query("SELECT r FROM Restaurant r WHERE r.owner.publicId = :ownerPublicId " +
+    @Query("SELECT DISTINCT r FROM Restaurant r LEFT JOIN FETCH r.cuisineTypes WHERE r.owner.publicId = :ownerPublicId " +
            "AND (LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(CAST(r.location AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Restaurant> searchByOwnerAndKeyword(@Param("ownerPublicId") UUID ownerPublicId, 

@@ -112,4 +112,24 @@ public class CartServiceImpl implements CartService{
 
         cartRepository.save(cart);
     }
+
+    @Override
+    public void updateQuantity(Long cartItemId, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+        
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new NotFoundException("Cart item not found"));
+        
+        Cart cart = item.getCart();
+        item.setQuantity(quantity);
+        
+        double total = cart.getItems().stream()
+                .mapToDouble(i -> i.getPrice() * i.getQuantity())
+                .sum();
+        
+        cart.setTotalAmount(total);
+        cartRepository.save(cart);
+    }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import { getOrderHistory, reorder } from "../api/orderApi";
 
@@ -9,7 +10,6 @@ const OrderHistoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reorderingId, setReorderingId] = useState(null);
-  const [successMsg, setSuccessMsg] = useState("");
   const intervalRef = useRef(null);
 
   const fetchOrders = async (showLoading = false) => {
@@ -50,10 +50,12 @@ const OrderHistoryPage = () => {
     setError("");
     try {
       await reorder(publicId);
-      setSuccessMsg("Items added to cart!");
+      toast.success("Items added to cart!");
       setTimeout(() => navigate("/cart"), 1000);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to reorder");
+      const msg = err.response?.data?.message || "Failed to reorder";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setReorderingId(null);
     }
@@ -101,8 +103,7 @@ const OrderHistoryPage = () => {
           </span>
         </div>
 
-        {/* Alerts */}
-        {successMsg && <div className="alert alert-success">{successMsg}</div>}
+        {/* Error Alert */}
         {error && <div className="alert alert-danger">{error}</div>}
 
         {/* Loading */}
