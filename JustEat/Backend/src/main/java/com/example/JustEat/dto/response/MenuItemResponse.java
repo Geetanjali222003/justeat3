@@ -20,4 +20,6 @@ public class MenuItemResponse {
     private DietaryRestriction dietaryRestriction;
     private boolean available;
     private boolean isSpecial;
+    private boolean isDealOfDay;
+    private String restaurantName;
 }

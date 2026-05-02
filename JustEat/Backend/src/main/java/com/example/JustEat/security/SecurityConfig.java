@@ -64,6 +64,9 @@ public class SecurityConfig {
                         // Order endpoints - owner only
                         .requestMatchers("/order/owner", "/order/*/status")
                         .hasRole("OWNER")
+                        // Owner endpoints - owner only
+                        .requestMatchers("/owner/**")
+                        .hasRole("OWNER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

@@ -49,6 +49,9 @@ public class User extends BaseEntity {
     @NotNull
     private Location location;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private UserPreference preference;
+
     @PrePersist
     public void generatePublicId() {
         if (publicId == null) {

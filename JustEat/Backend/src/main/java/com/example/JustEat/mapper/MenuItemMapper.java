@@ -4,7 +4,7 @@ import com.example.JustEat.dto.response.MenuItemResponse;
 import com.example.JustEat.entity.MenuItem;
 
 public class MenuItemMapper {
-    public static MenuItemResponse toResponse(MenuItem item){
+    public static MenuItemResponse toResponse(MenuItem item) {
         return MenuItemResponse.builder()
                 .id(item.getId())
                 .name(item.getName())
@@ -15,6 +15,8 @@ public class MenuItemMapper {
                 .dietaryRestriction(item.getDietaryRestriction())
                 .available(item.isAvailable())
                 .isSpecial(item.isSpecial())
+                .isDealOfDay(item.isDealOfDay())
+                .restaurantName(item.getRestaurant() != null ? item.getRestaurant().getName() : null)
                 .build();
     }
 }

@@ -39,6 +39,8 @@ public class MenuItem extends BaseEntity{
 
     private boolean isSpecial;
 
+    private boolean isDealOfDay;
+
     private boolean isAvailable = true;
 
     @Min(0)
