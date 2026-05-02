@@ -1,20 +1,54 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getMyRestaurants } from "../api/restaurantApi";
+import { getMyRestaurants, searchOwnerRestaurants } from "../api/restaurantApi";
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTimeout, setSearchTimeout] = useState(null);
+
+  const fetchRestaurants = useCallback(async (keyword = "") => {
+    setLoading(true);
+    setError("");
+    try {
+      let res;
+      if (keyword.trim()) {
+        res = await searchOwnerRestaurants(keyword);
+      } else {
+        res = await getMyRestaurants();
+      }
+      setRestaurants(res.data || []);
+    } catch (err) {
+      console.log(err.response);
+      const msg =
+        err.response?.data?.message || "Failed to load restaurant data";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    getMyRestaurants()
-      .then((res) => setRestaurants(res.data))
-      .catch(() => setError("Failed to load your restaurants."))
-      .finally(() => setLoading(false));
-  }, []);
+    fetchRestaurants();
+  }, [fetchRestaurants]);
+
+  // Debounced search
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    const timeout = setTimeout(() => {
+      fetchRestaurants(value);
+    }, 500);
+    setSearchTimeout(timeout);
+  };
 
   const getStatusBadge = (status) => {
     const s = (status || "OPEN").toUpperCase();
@@ -46,19 +80,40 @@ const OwnerDashboard = () => {
           </button>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-4">
+          <div className="input-group">
+            <span className="input-group-text bg-white border-end-0">🔍</span>
+            <input
+              type="text"
+              className="form-control border-start-0"
+              placeholder="Search restaurants..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
         {/* Loading */}
         {loading && (
           <div className="text-center py-5">
             <div className="spinner-border text-warning" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
+            <p className="text-muted mt-2">Loading...</p>
           </div>
         )}
 
         {/* Error */}
-        {error && (
+        {error && !loading && (
           <div className="alert alert-danger" role="alert">
             {error}
+            <button
+              className="btn btn-link text-danger p-0 ms-2"
+              onClick={() => fetchRestaurants()}
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -66,14 +121,22 @@ const OwnerDashboard = () => {
         {!loading && !error && restaurants.length === 0 && (
           <div className="text-center py-5">
             <div style={{ fontSize: "4rem" }}>🏪</div>
-            <h5 className="mt-3">No restaurants yet</h5>
-            <p className="text-muted">Create your first restaurant listing</p>
-            <button
-              onClick={() => navigate("/create-restaurant")}
-              className="btn btn-orange mt-3"
-            >
-              + Create Restaurant
-            </button>
+            <h5 className="mt-3">
+              {searchTerm ? "No restaurants found" : "No restaurants yet"}
+            </h5>
+            <p className="text-muted">
+              {searchTerm
+                ? "Try a different search term"
+                : "Create your first restaurant listing"}
+            </p>
+            {!searchTerm && (
+              <button
+                onClick={() => navigate("/create-restaurant")}
+                className="btn btn-orange mt-3"
+              >
+                + Create Restaurant
+              </button>
+            )}
           </div>
         )}
 
@@ -82,7 +145,10 @@ const OwnerDashboard = () => {
           <div className="row g-4">
             {restaurants.map((r) => (
               <div key={r.publicId} className="col-12 col-md-6 col-lg-4">
-                <div className="card h-100 border-0 shadow-sm">
+                <div
+                  className="card h-100 shadow-sm"
+                  style={{ border: "none" }}
+                >
                   {r.imageUrl ? (
                     <img
                       src={r.imageUrl}
@@ -123,36 +189,62 @@ const OwnerDashboard = () => {
                     >
                       {r.description}
                     </p>
-                    <div className="d-flex align-items-center gap-2 mb-3 small text-muted">
+                    <div className="d-flex align-items-center gap-2 mb-2 small text-muted">
                       <span>📍 {r.location}</span>
-                      {(r.cuisineTypes || []).slice(0, 1).map((c) => (
-                        <span
-                          key={c}
-                          className="badge"
-                          style={{
-                            backgroundColor: "#fff5eb",
-                            color: "var(--primary-orange)",
-                            fontSize: "10px",
-                          }}
-                        >
-                          {c.toLowerCase().replace(/_/g, " ")}
-                        </span>
-                      ))}
                     </div>
+                    {/* Rating */}
+                    <div className="d-flex align-items-center gap-1 mb-3">
+                      <span style={{ color: "#ffc107", fontSize: "14px" }}>
+                        ⭐
+                      </span>
+                      <span
+                        className="fw-semibold"
+                        style={{ fontSize: "14px" }}
+                      >
+                        {r.rating != null ? r.rating.toFixed(1) : "0.0"} / 5
+                      </span>
+                      {r.ratingCount > 0 && (
+                        <span
+                          className="text-muted"
+                          style={{ fontSize: "12px" }}
+                        >
+                          ({r.ratingCount})
+                        </span>
+                      )}
+                    </div>
+                    {/* Cuisine Tags */}
+                    {(r.cuisineTypes || []).length > 0 && (
+                      <div className="d-flex gap-1 flex-wrap mb-3">
+                        {(r.cuisineTypes || []).slice(0, 2).map((c) => (
+                          <span
+                            key={c}
+                            className="badge"
+                            style={{
+                              backgroundColor: "#fff5eb",
+                              color: "var(--primary-orange)",
+                              fontSize: "10px",
+                            }}
+                          >
+                            {c.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {/* Action Buttons */}
                     <div className="d-flex gap-2">
                       <button
                         onClick={() => navigate(`/restaurant/${r.publicId}`)}
                         className="btn btn-outline-secondary btn-sm flex-fill"
                       >
-                        View
+                        👁️ View
                       </button>
                       <button
                         onClick={() =>
                           navigate(`/manage-restaurant/${r.publicId}`)
                         }
-                        className="btn btn-orange btn-sm flex-fill"
+                        className="btn btn-warning btn-sm flex-fill"
                       >
-                        Manage
+                        ⚙️ Manage
                       </button>
                     </div>
                   </div>

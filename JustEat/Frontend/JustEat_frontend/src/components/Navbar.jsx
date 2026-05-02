@@ -88,6 +88,9 @@ const Navbar = () => {
               <Link to="/orders" style={navLinkStyle}>
                 📦 Orders
               </Link>
+              <Link to="/preferences" style={navLinkStyle}>
+                ⚙️ Preferences
+              </Link>
             </>
           )}
           <button

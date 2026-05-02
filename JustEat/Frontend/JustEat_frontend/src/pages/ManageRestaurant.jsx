@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import {
   getMenu,
@@ -7,7 +8,7 @@ import {
   updateMenuItem,
   deleteMenuItem,
 } from "../api/menuApi";
-import { getRestaurant } from "../api/restaurantApi";
+import { getRestaurant, markAsSpecial, markAsDeal } from "../api/restaurantApi";
 
 const CUISINE_TYPES = [
   "INDIAN",
@@ -195,12 +196,8 @@ const ManageRestaurant = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
-  const [successMsg, setSuccessMsg] = useState("");
-
-  const flash = (msg) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(""), 3000);
-  };
+  const [specialTogglingId, setSpecialTogglingId] = useState(null);
+  const [dealTogglingId, setDealTogglingId] = useState(null);
 
   useEffect(() => {
     Promise.all([getRestaurant(publicId), getMenu(publicId)])
@@ -231,7 +228,7 @@ const ManageRestaurant = () => {
       const res = await addMenuItem(publicId, formData);
       setMenuItems((prev) => [...prev, res.data]);
       setShowAddForm(false);
-      flash("Menu item added!");
+      toast.success("Menu item added!");
     } catch (err) {
       setAddError(err.response?.data?.message || "Failed to add item.");
     } finally {
@@ -258,7 +255,7 @@ const ManageRestaurant = () => {
         prev.map((i) => (i.id === editingItem.id ? res.data : i)),
       );
       setEditingItem(null);
-      flash("Changes saved!");
+      toast.success("Changes saved!");
     } catch (err) {
       setEditError(err.response?.data?.message || "Failed to save changes.");
     } finally {
@@ -271,9 +268,9 @@ const ManageRestaurant = () => {
     try {
       await deleteMenuItem(publicId, itemId);
       setMenuItems((prev) => prev.filter((i) => i.id !== itemId));
-      flash("Item deleted.");
+      toast.success("Item deleted.");
     } catch {
-      /* ignore */
+      toast.error("Failed to delete item");
     } finally {
       setDeletingId(null);
       setConfirmDeleteId(null);
@@ -289,13 +286,47 @@ const ManageRestaurant = () => {
       setMenuItems((prev) =>
         prev.map((i) => (i.id === item.id ? res.data : i)),
       );
-      flash(
+      toast.success(
         `${item.name} marked as ${!item.available ? "available" : "unavailable"}.`,
       );
     } catch {
-      /* ignore */
+      toast.error("Failed to update");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleToggleSpecial = async (item) => {
+    setSpecialTogglingId(item.id);
+    try {
+      await markAsSpecial(item.id, !item.isSpecial);
+      setMenuItems((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, isSpecial: !i.isSpecial } : i,
+        ),
+      );
+      toast.success("Updated successfully");
+    } catch {
+      toast.error("Failed to update");
+    } finally {
+      setSpecialTogglingId(null);
+    }
+  };
+
+  const handleToggleDeal = async (item) => {
+    setDealTogglingId(item.id);
+    try {
+      await markAsDeal(item.id, !item.isDealOfDay);
+      setMenuItems((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, isDealOfDay: !i.isDealOfDay } : i,
+        ),
+      );
+      toast.success("Updated successfully");
+    } catch {
+      toast.error("Failed to update");
+    } finally {
+      setDealTogglingId(null);
     }
   };
 
@@ -375,10 +406,6 @@ const ManageRestaurant = () => {
           )}
         </div>
 
-        {successMsg && (
-          <div className="alert alert-success py-2">{successMsg}</div>
-        )}
-
         {editingItem && (
           <MenuItemForm
             key={editingItem.id}
@@ -455,6 +482,9 @@ const ManageRestaurant = () => {
                           Special
                         </span>
                       )}
+                      {item.isDealOfDay && (
+                        <span className="badge bg-success">Deal</span>
+                      )}
                       {item.dietaryRestriction && (
                         <span
                           className={`badge bg-${dietaryBadge(item.dietaryRestriction)}`}
@@ -475,7 +505,7 @@ const ManageRestaurant = () => {
                     ₹{item.price?.toFixed(2)}
                   </div>
 
-                  <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex align-items-center gap-2 flex-wrap">
                     <button
                       onClick={() => handleToggle(item)}
                       disabled={togglingId === item.id}
@@ -486,6 +516,20 @@ const ManageRestaurant = () => {
                         : item.available
                           ? "On"
                           : "Off"}
+                    </button>
+                    <button
+                      onClick={() => handleToggleSpecial(item)}
+                      disabled={specialTogglingId === item.id}
+                      className={`btn btn-sm ${item.isSpecial ? "btn-warning" : "btn-outline-warning"}`}
+                    >
+                      {specialTogglingId === item.id ? "..." : "Special"}
+                    </button>
+                    <button
+                      onClick={() => handleToggleDeal(item)}
+                      disabled={dealTogglingId === item.id}
+                      className={`btn btn-sm ${item.isDealOfDay ? "btn-success" : "btn-outline-success"}`}
+                    >
+                      {dealTogglingId === item.id ? "..." : "Deal"}
                     </button>
                     <button
                       onClick={() => startEdit(item)}

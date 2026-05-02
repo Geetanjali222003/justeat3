@@ -11,6 +11,7 @@ import CartPage from "../pages/CartPage";
 import OrderHistoryPage from "../pages/OrderHistoryPage";
 import OrderDetailsPage from "../pages/OrderDetailsPage";
 import OwnerOrdersPage from "../pages/OwnerOrdersPage";
+import Preferences from "../pages/Preferences";
 import PrivateRoute from "../components/PrivateRoute";
 import { useAuth } from "../context/AuthContext";
 
@@ -98,6 +99,14 @@ const AppRoutes = () => (
         element={
           <PrivateRoute>
             <OrderDetailsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/preferences"
+        element={
+          <PrivateRoute>
+            <Preferences />
           </PrivateRoute>
         }
       />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import { getRestaurant, submitRating } from "../api/restaurantApi";
 import { getMenu } from "../api/menuApi";
@@ -15,7 +16,6 @@ const RestaurantDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [addingItemId, setAddingItemId] = useState(null);
-  const [cartMessage, setCartMessage] = useState("");
 
   // Rating state
   const [selectedRating, setSelectedRating] = useState("5");
@@ -34,14 +34,11 @@ const RestaurantDetail = () => {
 
   const handleAddToCart = async (menuItemId) => {
     setAddingItemId(menuItemId);
-    setCartMessage("");
     try {
       await addToCart(menuItemId, 1);
-      setCartMessage("Added to cart!");
-      setTimeout(() => setCartMessage(""), 2000);
+      toast.success("Added to cart!");
     } catch (err) {
-      setCartMessage(err.response?.data?.message || "Failed to add to cart");
-      setTimeout(() => setCartMessage(""), 3000);
+      toast.error(err.response?.data?.message || "Failed to add to cart");
     } finally {
       setAddingItemId(null);
     }
@@ -51,12 +48,11 @@ const RestaurantDetail = () => {
     setRatingSubmitting(true);
     try {
       await submitRating(publicId, parseInt(selectedRating));
-      alert("Rating submitted successfully");
-      // Refresh restaurant to get updated rating
+      toast.success("Rating submitted successfully");
       const res = await getRestaurant(publicId);
       setRestaurant(res.data);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to submit rating");
+      toast.error(err.response?.data?.message || "Failed to submit rating");
     } finally {
       setRatingSubmitting(false);
     }
@@ -207,13 +203,6 @@ const RestaurantDetail = () => {
             {/* Menu Section */}
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h5 className="fw-bold mb-0">Menu</h5>
-              {cartMessage && (
-                <span
-                  className={`badge ${cartMessage.includes("Added") ? "bg-success" : "bg-danger"}`}
-                >
-                  {cartMessage}
-                </span>
-              )}
             </div>
 
             {menu.length === 0 ? (
@@ -222,31 +211,54 @@ const RestaurantDetail = () => {
                 <h5 className="mt-3">No menu items yet</h5>
               </div>
             ) : (
-              <div className="row g-3">
+              <div className="row g-4">
                 {menu.map((item) => (
                   <div key={item.id} className="col-12 col-sm-6 col-lg-4">
                     <div
-                      className={`card h-100 border-0 shadow-sm ${!item.available ? "opacity-50" : ""}`}
+                      className={`card h-100 shadow-sm ${!item.available ? "opacity-50" : ""}`}
+                      style={
+                        item.isDealOfDay
+                          ? { border: "2px solid #fc8019" }
+                          : { border: "none" }
+                      }
                     >
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <h6 className="card-title fw-bold mb-0">
                             {item.name}
                           </h6>
-                          <span
-                            className="badge"
-                            style={{
-                              backgroundColor: getDietBadge(
-                                item.dietaryRestriction,
-                              ).bg,
-                              color: getDietBadge(item.dietaryRestriction)
-                                .color,
-                              fontSize: "10px",
-                            }}
-                          >
-                            {item.dietaryRestriction?.replace("_", " ") ||
-                              "VEG"}
-                          </span>
+                          <div className="d-flex gap-1">
+                            {item.isSpecial && (
+                              <span
+                                className="badge bg-warning text-dark"
+                                style={{ fontSize: "10px" }}
+                              >
+                                Special
+                              </span>
+                            )}
+                            {item.isDealOfDay && (
+                              <span
+                                className="badge bg-success"
+                                style={{ fontSize: "10px" }}
+                              >
+                                Deal
+                              </span>
+                            )}
+                            <span
+                              className="badge"
+                              style={{
+                                backgroundColor: getDietBadge(
+                                  item.dietaryRestriction,
+                                ).bg,
+                                color: getDietBadge(item.dietaryRestriction)
+                                  .color,
+                                fontSize: "10px",
+                              }}
+                            >
+                              {item.dietaryRestriction?.replace("_", " ") ||
+                                "VEG"}
+                            </span>
+                          </div>
                         </div>
                         <p
                           className="h5 fw-bold mb-3"
