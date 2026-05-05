@@ -19,7 +19,7 @@ public class CartController {
 
     private final CartService cartService;
 
-    // ➕ Add item
+    //  Add item
     @PostMapping("/add")
     public ResponseEntity<String> addToCart(
             @Valid @RequestBody AddToCartRequest request
@@ -33,13 +33,14 @@ public class CartController {
         return ResponseEntity.ok("Item added to cart");
     }
 
-    // 📦 Get cart
+    //  Get cart
     @GetMapping
     public ResponseEntity<CartResponse> getCart() {
+
         return ResponseEntity.ok(cartService.getCart());
     }
 
-    // 🔄 Update item quantity
+    //  Update item quantity
     @PutMapping("/item/{id}")
     public ResponseEntity<String> updateQuantity(
             @PathVariable Long id,
@@ -49,14 +50,14 @@ public class CartController {
         return ResponseEntity.ok("Quantity updated");
     }
 
-    // ❌ Remove item
+    //  Remove item
     @DeleteMapping("/item/{id}")
     public ResponseEntity<String> removeItem(@PathVariable Long id) {
         cartService.removeItem(id);
         return ResponseEntity.ok("Item removed");
     }
 
-    // 🧹 Clear cart
+    // Clear cart
     @DeleteMapping("/clear")
     public ResponseEntity<String> clearCart() {
         cartService.clearCart();

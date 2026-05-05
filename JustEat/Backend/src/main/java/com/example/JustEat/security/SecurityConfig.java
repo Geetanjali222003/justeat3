@@ -30,7 +30,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -45,31 +45,13 @@ public class SecurityConfig {
                 .csrf(csrf-> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth->auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(
-                                "/auth/**",
-                                "/swagger-ui/**",
-                                "/api-docs/**",
-                                "/v3/api-docs/**"
-                        )
-                        .permitAll()
-                        // Profile endpoints - authenticated users
-                        .requestMatchers("/profile/**")
-                        .authenticated()
-                        .requestMatchers("/cart/**")
-                        .hasRole("CUSTOMER")
-                        // Customer endpoints - customer only
-                        .requestMatchers("/customer/**")
-                        .hasRole("CUSTOMER")
-                        // Order endpoints - customer only
-                        .requestMatchers("/order/place", "/order/history", "/order/reorder/**")
-                        .hasRole("CUSTOMER")
-                        // Order endpoints - owner only
-                        .requestMatchers("/order/owner", "/order/*/status")
-                        .hasRole("OWNER")
-                        // Owner endpoints - owner only
-                        .requestMatchers("/owner/**")
-                        .hasRole("OWNER")
+                        .requestMatchers("/auth/**", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/profile/**").authenticated()
+                        .requestMatchers("/cart/**").hasRole("CUSTOMER")
+                        .requestMatchers("/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers("/order/place", "/order/history", "/order/reorder/**").hasRole("CUSTOMER")
+                        .requestMatchers("/order/owner", "/order/*/status").hasRole("OWNER")
+                        .requestMatchers("/owner/**").hasRole("OWNER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
