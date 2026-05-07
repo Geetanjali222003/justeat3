@@ -21,10 +21,8 @@ public class CartController {
 
     //  Add item
     @PostMapping("/add")
-    public ResponseEntity<String> addToCart(
-            @Valid @RequestBody AddToCartRequest request
+    public ResponseEntity<String> addToCart(@Valid @RequestBody AddToCartRequest request
     ) {
-
         cartService.addToCart(
                 request.getMenuItemId(),
                 request.getQuantity()
@@ -42,10 +40,7 @@ public class CartController {
 
     //  Update item quantity
     @PutMapping("/item/{id}")
-    public ResponseEntity<String> updateQuantity(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateCartItemRequest request
-    ) {
+    public ResponseEntity<String> updateQuantity(@PathVariable Long id, @Valid @RequestBody UpdateCartItemRequest request) {
         cartService.updateQuantity(id, request.getQuantity());
         return ResponseEntity.ok("Quantity updated");
     }

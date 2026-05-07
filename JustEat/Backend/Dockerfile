@@ -1,30 +1,38 @@
-# ========== Stage 1: Build ==========
+# ================================
+# Stage 1: Build the Spring Boot Application
+# ================================
+
+# Use Maven with Java 21 to build the project
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 
+# Set working directory inside container
 WORKDIR /app
 
-# Copy pom.xml first to cache dependency layer
+# Copy Maven configuration file
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
 
-# Copy source and build (skip tests — tests run in CI separately)
+# Copy source code
 COPY src ./src
-RUN mvn package -DskipTests -B
 
-# ========== Stage 2: Runtime ==========
+# Build the project and create executable JAR
+# -DskipTests skips test execution for faster build
+RUN mvn clean package -DskipTests
+
+# ================================
+# Stage 2: Run the Application
+# ================================
+
+# Use lightweight Java Runtime image
 FROM eclipse-temurin:21-jre-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Create a non-root user for security
-RUN addgroup -S justeat && adduser -S justeat -G justeat
-
+# Copy generated JAR file from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-RUN chown justeat:justeat app.jar
-USER justeat
-
+# Expose backend port
 EXPOSE 8090
 
+# Start Spring Boot application
 ENTRYPOINT ["java", "-jar", "app.jar"]
-

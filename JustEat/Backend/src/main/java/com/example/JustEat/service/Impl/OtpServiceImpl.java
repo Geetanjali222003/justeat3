@@ -4,11 +4,13 @@ import com.example.JustEat.service.EmailService;
 import com.example.JustEat.service.OtpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -19,15 +21,19 @@ public class OtpServiceImpl implements OtpService {
     private static final int OTP_LENGTH = 6;
     private static final long OTP_EXPIRY_MINUTES = 5;
 
-    private final RedisTemplate<String, String> redisTemplate;
     private final EmailService emailService;
+
+    // In-memory OTP storage: key -> OtpEntry(otp, expiryTime)
+    private final Map<String, OtpEntry> otpStore = new ConcurrentHashMap<>();
 
     @Override
     public void sendOtp(String email) {
         String otp = generateOtp();
         String key = OTP_PREFIX + email;
         
-        redisTemplate.opsForValue().set(key, otp, Duration.ofMinutes(OTP_EXPIRY_MINUTES));
+        // Store OTP with expiry time
+        Instant expiryTime = Instant.now().plusSeconds(OTP_EXPIRY_MINUTES * 60);
+        otpStore.put(key, new OtpEntry(otp, expiryTime));
         log.info("OTP generated for {}", email);
         
         emailService.sendEmail(email, "Your OTP Code - JustEat", 
@@ -37,14 +43,21 @@ public class OtpServiceImpl implements OtpService {
     @Override
     public boolean verifyOtp(String email, String otp) {
         String key = OTP_PREFIX + email;
-        String storedOtp = redisTemplate.opsForValue().get(key);
+        OtpEntry entry = otpStore.get(key);
         
-        if (storedOtp == null) {
+        if (entry == null) {
             log.warn("No OTP found for email: {}", email);
             return false;
         }
         
-        boolean isValid = storedOtp.equals(otp);
+        // Check if expired
+        if (Instant.now().isAfter(entry.expiryTime())) {
+            log.warn("OTP expired for email: {}", email);
+            otpStore.remove(key);
+            return false;
+        }
+        
+        boolean isValid = entry.otp().equals(otp);
         log.info("OTP verification for {}: {}", email, isValid ? "SUCCESS" : "FAILED");
         return isValid;
     }
@@ -52,7 +65,7 @@ public class OtpServiceImpl implements OtpService {
     @Override
     public void deleteOtp(String email) {
         String key = OTP_PREFIX + email;
-        redisTemplate.delete(key);
+        otpStore.remove(key);
         log.info("OTP deleted for {}", email);
     }
 
@@ -64,5 +77,14 @@ public class OtpServiceImpl implements OtpService {
         }
         return otp.toString();
     }
-}
 
+    // Cleanup expired OTPs every minute
+    @Scheduled(fixedRate = 60000)
+    public void cleanupExpiredOtps() {
+        Instant now = Instant.now();
+        otpStore.entrySet().removeIf(entry -> now.isAfter(entry.getValue().expiryTime()));
+    }
+
+    // Simple record to hold OTP and its expiry time
+    private record OtpEntry(String otp, Instant expiryTime) {}
+}
