@@ -4,6 +4,9 @@ import {
   logout as logoutService,
 } from "../auth/authService";
 
+// AuthContext provides authentication state (token, role, userId, location)
+// and helper methods (`login`, `logout`) to the rest of the app via context.
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -15,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   );
 
   const login = async (credentials) => {
+    // Call auth service and persist result into localStorage + state
     const res = await loginService(credentials);
     const { token: jwt, role: userRole, userId: uid, location } = res.data;
     localStorage.setItem("token", jwt);
@@ -29,6 +33,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Clear auth state and notify auth service (if any)
     logoutService();
     setToken(null);
     setRole(null);

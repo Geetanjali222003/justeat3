@@ -15,6 +15,7 @@ import Preferences from "../pages/Preferences";
 import PrivateRoute from "../components/PrivateRoute";
 import { useAuth } from "../context/AuthContext";
 
+// Small helper: decide whether to show Home (customer) or Owner dashboard
 const HomeOrDashboard = () => {
   const { role } = useAuth();
   return role === "OWNER" ? (

@@ -1,6 +1,8 @@
 import api from "./axiosConfig";
 
-// Cart APIs - Customer endpoints
+// Cart API wrappers — use the shared axios instance which already
+// attaches auth headers. These helpers keep API calls consistent
+// across components.
 export const addToCart = (menuItemId, quantity) =>
   api.post("/cart/add", { menuItemId, quantity });
 

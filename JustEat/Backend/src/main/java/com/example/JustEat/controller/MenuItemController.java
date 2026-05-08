@@ -27,6 +27,8 @@ import java.util.UUID;
 public class MenuItemController {
     private final MenuItemService menuItemService;
 
+    // Create a new menu item for a restaurant (OWNER only). Multipart form
+    // data is used because the request includes an image file.
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('OWNER')")
     public MenuItemResponse addMenuItem(
@@ -54,11 +56,13 @@ public class MenuItemController {
         return menuItemService.addMenuItem(restaurantId, request, image, userId);
     }
 
+    // Retrieve menu for a restaurant (open to any authenticated user)
     @GetMapping
     public List<MenuItemResponse> getMenu(@PathVariable UUID restaurantId){
         return menuItemService.getMenu(restaurantId);
     }
 
+    // Update an existing menu item (OWNER must own restaurant)
     @PatchMapping("/{menuItemId}")
     @PreAuthorize("hasRole('OWNER')")
     public MenuItemResponse updateMenuItem(@PathVariable UUID restaurantId, @PathVariable Long menuItemId, @RequestBody @Valid UpdateMenuItemRequest request){
@@ -68,6 +72,7 @@ public class MenuItemController {
         return menuItemService.updateMenuItem(restaurantId, menuItemId, request, userId);
     }
 
+    // Delete a menu item from a restaurant
     @DeleteMapping("/{menuItemId}")
     @PreAuthorize("hasRole('OWNER')")
     public void deleteMenuItem(@PathVariable UUID restaurantId, @PathVariable Long menuItemId ){

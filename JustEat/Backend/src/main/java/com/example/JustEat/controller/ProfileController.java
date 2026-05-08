@@ -20,6 +20,7 @@ public class ProfileController {
     
     private final UserService userService;
 
+    // Retrieve profile information for the authenticated user
     @GetMapping
     public ResponseEntity<UserProfileResponse> getProfile() {
         UUID userId = getCurrentUserId();
@@ -27,6 +28,7 @@ public class ProfileController {
         return ResponseEntity.ok(profile);
     }
 
+    // Update the authenticated user's profile information
     @PutMapping
     public ResponseEntity<UserProfileResponse> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request) {
@@ -35,6 +37,7 @@ public class ProfileController {
         return ResponseEntity.ok(profile);
     }
 
+    // Update profile image for the authenticated user (multipart upload)
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserProfileResponse> updateProfileImage(
             @RequestParam("image") MultipartFile image) {

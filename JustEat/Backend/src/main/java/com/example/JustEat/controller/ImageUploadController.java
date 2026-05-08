@@ -43,6 +43,8 @@ public class ImageUploadController {
 
     /**
      * Upload menu item image (OWNER only)
+     *
+     * The uploaded file is sent to Cloudinary and a URL + publicId is returned.
      */
     @PostMapping(value = "/menu-items", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('OWNER')")

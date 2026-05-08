@@ -1,5 +1,10 @@
 import axios from "axios";
 
+// Central axios instance for API calls.
+// - `baseURL` points to API server
+// - Adds JSON content-type and includes credentials
+// - Request interceptor attaches JWT token when available
+// - Response interceptor redirects to login on 401 when token missing
 const api = axios.create({
   baseURL: "https://justeat-dyfmc5h3f0gphpch.eastasia-01.azurewebsites.net",
   headers: {
@@ -17,7 +22,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 errors - only redirect if token is missing/invalid
+// Handle 401: if token missing, redirect user to login
 api.interceptors.response.use(
   (response) => response,
   (error) => {

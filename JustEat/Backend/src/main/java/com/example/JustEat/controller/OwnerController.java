@@ -43,7 +43,6 @@ public class OwnerController {
     private final MenuItemService menuItemService;
 
     // ==================== Restaurant Endpoints ====================
-
     // Create restaurant
     @PostMapping(value = "/restaurants", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RestaurantResponse> createRestaurant(
@@ -64,6 +63,7 @@ public class OwnerController {
         return ResponseEntity.ok(response);
     }
 
+    // Get restaurants owned by the current authenticated owner user
     @GetMapping("/restaurants")
     public ResponseEntity<List<RestaurantResponse>> getOwnerRestaurants() {
         UUID userId = getCurrentUserId();
@@ -71,6 +71,7 @@ public class OwnerController {
         return ResponseEntity.ok(restaurants);
     }
 
+    // Search within restaurants owned by this owner
     @GetMapping("/restaurants/search")
     public ResponseEntity<List<RestaurantResponse>> searchOwnerRestaurants(
             @RequestParam(required = false, defaultValue = "") String keyword) {
@@ -86,7 +87,7 @@ public class OwnerController {
         return ResponseEntity.ok(restaurant);
     }
 
-    // Delete restaurant
+    // Delete a restaurant owned by the current owner
     @DeleteMapping("/restaurants/{id}")
     public ResponseEntity<Void> deleteRestaurant(@PathVariable UUID id) {
         UUID userId = getCurrentUserId();
@@ -94,7 +95,7 @@ public class OwnerController {
         return ResponseEntity.noContent().build();
     }
 
-    // Get menu items for a specific restaurant
+    // Get menu items for a specific restaurant owned by the current owner
     @GetMapping("/restaurants/{id}/menu")
     public ResponseEntity<List<MenuItemResponse>> getRestaurantMenu(@PathVariable UUID id) {
         UUID userId = getCurrentUserId();
@@ -102,7 +103,7 @@ public class OwnerController {
         return ResponseEntity.ok(menuItems);
     }
 
-    // Add menu item to restaurant
+    // Add a menu item to a restaurant (owner must be authenticated)
     @PostMapping(value = "/restaurants/{id}/menu", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MenuItemResponse> addMenuItem(
             @PathVariable UUID id,
@@ -128,7 +129,7 @@ public class OwnerController {
         return ResponseEntity.ok(response);
     }
 
-    // Update menu item
+    // Update menu item (owner only)
     @PatchMapping("/restaurants/{id}/menu/{menuItemId}")
     public ResponseEntity<MenuItemResponse> updateMenuItem(
             @PathVariable UUID id,
@@ -139,7 +140,7 @@ public class OwnerController {
         return ResponseEntity.ok(response);
     }
 
-    // Delete menu item
+    // Delete menu item (owner only)
     @DeleteMapping("/restaurants/{id}/menu/{menuItemId}")
     public ResponseEntity<Void> deleteMenuItem(
             @PathVariable UUID id,
@@ -151,6 +152,7 @@ public class OwnerController {
 
     // ==================== Order Endpoints ====================
 
+    // Get all orders for restaurants owned by the current owner
     @GetMapping("/orders")
     public ResponseEntity<List<OrderResponse>> getOwnerOrders() {
         List<OrderResponse> orders = orderService.getOwnerOrders();
@@ -160,6 +162,7 @@ public class OwnerController {
     // ==================== Food/Menu Item Endpoints ====================
 
     @PutMapping("/foods/{id}/special")
+    // Toggle 'special' flag on a menu item
     public ResponseEntity<MenuItemResponse> updateSpecialFlag(
             @PathVariable Long id,
             @Valid @RequestBody SpecialFlagRequest request) {
@@ -169,6 +172,7 @@ public class OwnerController {
     }
 
     @PutMapping("/foods/{id}/deal")
+    // Toggle 'deal of the day' flag on a menu item
     public ResponseEntity<MenuItemResponse> updateDealFlag(
             @PathVariable Long id,
             @Valid @RequestBody DealFlagRequest request) {

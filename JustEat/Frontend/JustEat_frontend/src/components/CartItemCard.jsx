@@ -1,3 +1,5 @@
+// Small presentational component used inside the Cart page
+// Displays a cart item, its quantity and price, and a remove button
 const CartItemCard = ({ item, onRemove, removing }) => {
   return (
     <div className="card border-0 shadow-sm p-3 mb-3">

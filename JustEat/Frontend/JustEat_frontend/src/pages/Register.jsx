@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register as registerService, sendOtp } from "../auth/authService";
 
+// Register page
+// - Handles account creation with OTP verification
+// - Supports role selection (Customer / Owner) and profile fields
 const Register = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({

@@ -14,6 +14,8 @@ import { useAuth } from "../context/AuthContext";
 
 const LOCATIONS = ["ALL", "NOIDA", "DELHI", "GURGAON"];
 
+// Home page for customers: shows restaurants, specials, most ordered items
+// and personalized recommendations when available
 const Home = () => {
   const { userLocation, role, userId } = useAuth();
   const [restaurants, setRestaurants] = useState([]);

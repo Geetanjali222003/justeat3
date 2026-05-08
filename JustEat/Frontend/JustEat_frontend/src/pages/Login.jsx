@@ -3,6 +3,9 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 
+// Login page
+// - Handles sign-in form submission
+// - Uses `login` from AuthContext and redirects based on role
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();

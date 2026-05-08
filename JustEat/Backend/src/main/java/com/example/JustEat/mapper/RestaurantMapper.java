@@ -4,6 +4,7 @@ import com.example.JustEat.dto.response.RestaurantResponse;
 import com.example.JustEat.entity.Restaurant;
 
 public class RestaurantMapper {
+    // Convert Restaurant entity to RestaurantResponse DTO. Keep mapping simple and side-effect free.
     public static RestaurantResponse toResponse(Restaurant restaurant){
         return RestaurantResponse.builder()
                 .publicId(restaurant.getPublicId())

@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getProfile, updateProfile, updateProfileImage } from "../api/profileApi";
+import {
+  getProfile,
+  updateProfile,
+  updateProfileImage,
+} from "../api/profileApi";
 
 const LOCATIONS = [
   "DELHI",
@@ -17,6 +21,9 @@ const LOCATIONS = [
 
 const GENDERS = ["MALE", "FEMALE", "OTHER"];
 
+// Profile page
+// - Shows user profile information and allows editing
+// - Supports changing profile picture with validation
 const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
@@ -265,7 +272,9 @@ const Profile = () => {
                         disabled
                         style={{ backgroundColor: "#f5f5f5" }}
                       />
-                      <small className="text-muted">Email cannot be changed</small>
+                      <small className="text-muted">
+                        Email cannot be changed
+                      </small>
                     </div>
 
                     <div className="col-md-6">
@@ -334,8 +343,13 @@ const Profile = () => {
                             {profile?.role === "OWNER" ? "🏪" : "🍔"}
                           </span>
                           <div>
-                            <div className="fw-semibold small">Account Type</div>
-                            <div className="text-muted" style={{ fontSize: "13px" }}>
+                            <div className="fw-semibold small">
+                              Account Type
+                            </div>
+                            <div
+                              className="text-muted"
+                              style={{ fontSize: "13px" }}
+                            >
                               {profile?.role}
                             </div>
                           </div>
@@ -371,4 +385,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

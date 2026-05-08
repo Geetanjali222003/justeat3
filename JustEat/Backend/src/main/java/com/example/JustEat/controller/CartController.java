@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.*;
 public class CartController {
 
     private final CartService cartService;
+    // Controller handling customer's cart actions (add/update/remove/clear)
+    // Delegates actual operations to CartService; endpoints return simple messages
 
-    //  Add item
+    // Add item to the current user's cart
     @PostMapping("/add")
     public ResponseEntity<String> addToCart(@Valid @RequestBody AddToCartRequest request
     ) {
@@ -31,28 +33,28 @@ public class CartController {
         return ResponseEntity.ok("Item added to cart");
     }
 
-    //  Get cart
+    // Get the current authenticated user's cart
     @GetMapping
     public ResponseEntity<CartResponse> getCart() {
 
         return ResponseEntity.ok(cartService.getCart());
     }
 
-    //  Update item quantity
+    // Update quantity for a specific cart item
     @PutMapping("/item/{id}")
     public ResponseEntity<String> updateQuantity(@PathVariable Long id, @Valid @RequestBody UpdateCartItemRequest request) {
         cartService.updateQuantity(id, request.getQuantity());
         return ResponseEntity.ok("Quantity updated");
     }
 
-    //  Remove item
+    // Remove a specific item from the cart
     @DeleteMapping("/item/{id}")
     public ResponseEntity<String> removeItem(@PathVariable Long id) {
         cartService.removeItem(id);
         return ResponseEntity.ok("Item removed");
     }
 
-    // Clear cart
+    // Clear the user's cart
     @DeleteMapping("/clear")
     public ResponseEntity<String> clearCart() {
         cartService.clearCart();

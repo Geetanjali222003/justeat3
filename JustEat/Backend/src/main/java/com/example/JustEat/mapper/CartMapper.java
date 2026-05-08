@@ -7,9 +7,11 @@ import com.example.JustEat.entity.Cart;
 import java.util.stream.Collectors;
 
 public class CartMapper {
-
+    // Mapper that converts Cart entity to CartResponse DTO
+    // - Maps cart items to CartItemResponse and preserves total amount and restaurant info
     public static CartResponse toResponse(Cart cart) {
 
+        // Use simple stream mapping for items; avoid business logic here
         return CartResponse.builder()
                 .restaurantId(cart.getRestaurant().getId())
                 .restaurantName(cart.getRestaurant().getName())

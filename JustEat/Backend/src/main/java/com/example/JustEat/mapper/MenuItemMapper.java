@@ -4,6 +4,8 @@ import com.example.JustEat.dto.response.MenuItemResponse;
 import com.example.JustEat.entity.MenuItem;
 
 public class MenuItemMapper {
+    // Map MenuItem entity to MenuItemResponse DTO
+    // Note: we defensively handle a possible null restaurant reference when reading its name
     public static MenuItemResponse toResponse(MenuItem item) {
         return MenuItemResponse.builder()
                 .id(item.getId())

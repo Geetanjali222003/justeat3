@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    // Expose current authenticated user's summary/profile info
     @GetMapping("/me")
     public UserResponse getCurrentUser(){
         return userService.getCurrentUser();

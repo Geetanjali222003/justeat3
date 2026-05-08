@@ -26,6 +26,12 @@ import java.util.List;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    // SecurityConfig centralizes web security configuration:
+    // - Configures CORS allowed origins/methods/headers used by the frontend
+    // - Disables CSRF for stateless JWT-based API
+    // - Defines route-based authorization rules (roles/permissions)
+    // - Registers JWT authentication filter
+    // Keep comments minimal; behavior is configured in beans below.
     private final JwtAuthenticationFilter jwtFilter;
 
     @Bean

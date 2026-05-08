@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getCart, removeCartItem, clearCart, updateCartItemQuantity } from "../api/cartApi";
+import {
+  getCart,
+  removeCartItem,
+  clearCart,
+  updateCartItemQuantity,
+} from "../api/cartApi";
 import { placeOrder } from "../api/orderApi";
 
+// Cart page
+// - Displays user's cart, allows removing items, updating quantities
+// - Enables clearing the cart and placing an order
 const CartPage = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState(null);

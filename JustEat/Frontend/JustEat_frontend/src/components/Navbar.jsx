@@ -16,6 +16,10 @@ const navLinkStyle = {
   gap: "6px",
 };
 
+// Top navigation bar component
+// Shows logo, navigation links and user profile dropdown
+// - Uses `useAuth` to determine role and conditionally render links
+// - Fetches current user's profile for the avatar / initials
 const Navbar = () => {
   const { logout, role } = useAuth();
   const navigate = useNavigate();
@@ -78,6 +82,7 @@ const Navbar = () => {
         }}
       >
         {/* Logo */}
+        {/* Brand logo (linked to home) - uses Bootstrap utilities for spacing */}
         <Link to="/" className="text-decoration-none">
           <div className="d-flex align-items-center gap-2">
             <span
@@ -90,6 +95,7 @@ const Navbar = () => {
         </Link>
 
         {/* Navigation Links */}
+        {/* Render owner- or customer-specific links based on `role` */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {role === "OWNER" && (
             <>
@@ -132,6 +138,7 @@ const Navbar = () => {
           )}
 
           {/* Profile Dropdown */}
+          {/* Button shows profile image or initials; dropdown contains profile actions */}
           <div
             ref={dropdownRef}
             style={{ position: "relative", marginLeft: "12px" }}
@@ -202,6 +209,7 @@ const Navbar = () => {
                 </div>
 
                 {/* Menu Items */}
+                {/* Navigate to profile or trigger logout confirmation */}
                 <div style={{ padding: "8px 0" }}>
                   <button
                     onClick={() => {
@@ -262,6 +270,7 @@ const Navbar = () => {
             )}
           </div>
 
+          {/* Hidden fallback logout button (not used when dropdown is present) */}
           <button
             onClick={handleLogout}
             style={{

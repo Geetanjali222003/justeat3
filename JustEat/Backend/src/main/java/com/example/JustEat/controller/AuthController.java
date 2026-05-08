@@ -20,30 +20,35 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/send-otp")
+    // Trigger sending an OTP to the provided email (used for signup/login flows)
     public String sendOtp(@Valid @RequestBody SendOtpRequest request) {
         authService.sendOtp(request);
         return "OTP sent successfully";
     }
 
     @PostMapping("/register")
+    // Register a new user account
     public String register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
         return "Registration successful";
     }
 
     @PostMapping("/login")
+    // Authenticate user and return tokens / session info
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
 
         return authService.login(request);
     }
 
     @PostMapping("/send-reset-otp")
+    // Send an OTP for password reset
     public String sendResetOtp(@Valid @RequestBody SendOtpRequest request) {
         authService.sendResetOtp(request);
         return "OTP sent successfully";
     }
 
     @PostMapping("/reset-password")
+    // Reset password using OTP and new password supplied
     public String resetPassword(@Valid @RequestBody ResetPasswordWithOtpRequest request) {
         authService.resetPassword(request);
         return "Password updated";

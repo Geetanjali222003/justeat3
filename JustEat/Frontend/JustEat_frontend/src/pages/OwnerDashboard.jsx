@@ -2,8 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getMyRestaurants, searchOwnerRestaurants, deleteRestaurant } from "../api/restaurantApi";
+import {
+  getMyRestaurants,
+  searchOwnerRestaurants,
+  deleteRestaurant,
+} from "../api/restaurantApi";
 
+// Owner dashboard page: lists restaurants owned by current user
+// Allows search and quick navigation to manage each restaurant
 const OwnerDashboard = () => {
   const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
@@ -285,7 +291,9 @@ const OwnerDashboard = () => {
                             className="btn btn-danger btn-sm flex-fill"
                             disabled={deletingId === r.publicId}
                           >
-                            {deletingId === r.publicId ? "Deleting..." : "✓ Confirm Delete"}
+                            {deletingId === r.publicId
+                              ? "Deleting..."
+                              : "✓ Confirm Delete"}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
