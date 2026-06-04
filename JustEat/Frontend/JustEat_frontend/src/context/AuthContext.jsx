@@ -4,12 +4,20 @@ import {
   logout as logoutService,
 } from "../auth/authService";
 
-// AuthContext provides authentication state (token, role, userId, location)
-// and helper methods (`login`, `logout`) to the rest of the app via context.
+/*
+  AuthContext.jsx
+  - Provides authentication state and helpers to the app via React Context.
+  - Stored state mirrors values persisted in `localStorage` so auth survives
+    page reloads (token, role, userId, userLocation).
+  - Exposes `login` and `logout` functions that wrap the backend auth
+    service and update both localStorage and React state.
+*/
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  // Initialize state from localStorage so the app remains logged in after
+  // a page refresh if valid auth values are present.
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [role, setRole] = useState(() => localStorage.getItem("role"));
   const [userId, setUserId] = useState(() => localStorage.getItem("userId"));
@@ -17,14 +25,21 @@ export const AuthProvider = ({ children }) => {
     localStorage.getItem("userLocation"),
   );
 
+  /**
+   * Log in by calling the auth service, persist returned values, and update
+   * context state so consuming components re-render with the new auth state.
+   * Returns the raw response so callers can inspect status/data.
+   */
   const login = async (credentials) => {
-    // Call auth service and persist result into localStorage + state
     const res = await loginService(credentials);
     const { token: jwt, role: userRole, userId: uid, location } = res.data;
+    // Persist important auth data for subsequent page loads
     localStorage.setItem("token", jwt);
     localStorage.setItem("role", userRole);
     localStorage.setItem("userId", uid);
     if (location) localStorage.setItem("userLocation", location);
+
+    // Update React state so consumers receive the new auth values
     setToken(jwt);
     setRole(userRole);
     setUserId(uid);
@@ -32,8 +47,14 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  /**
+   * Logout: clear local auth state and call `logoutService` which may perform
+   * additional server-side session cleanup if implemented.
+   * Note: we remove `userLocation` from storage here; token/role/userId are
+   * expected to be cleared by `logoutService` (or you can remove them here
+   * as well if you prefer explicitness).
+   */
   const logout = () => {
-    // Clear auth state and notify auth service (if any)
     logoutService();
     setToken(null);
     setRole(null);
@@ -51,6 +72,7 @@ export const AuthProvider = ({ children }) => {
         userLocation,
         login,
         logout,
+        // Consumer convenience boolean for quick auth checks
         isAuthenticated: !!token,
       }}
     >
@@ -59,4 +81,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// Simple hook for components to access auth context values
 export const useAuth = () => useContext(AuthContext);

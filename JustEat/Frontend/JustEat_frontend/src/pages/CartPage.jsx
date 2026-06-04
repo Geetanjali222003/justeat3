@@ -10,80 +10,157 @@ import {
 } from "../api/cartApi";
 import { placeOrder } from "../api/orderApi";
 
-// Cart page
-// - Displays user's cart, allows removing items, updating quantities
-// - Enables clearing the cart and placing an order
+/*
+  CartPage
+  - Shows the current user's cart with items, quantities and total amount.
+  - Supports: removing items, updating quantities, clearing the cart,
+    and placing an order. All API interactions are delegated to the
+    `cartApi` and `orderApi` helpers which return axios promises.
+*/
 const CartPage = () => {
+  // Hook for programmatic navigation
   const navigate = useNavigate();
+
+  // State: Cart object containing items array, totalAmount, and restaurant info
   const [cart, setCart] = useState(null);
+
+  // State: Loading indicator for initial page load
   const [loading, setLoading] = useState(true);
+
+  // State: Error message to display if operations fail
   const [error, setError] = useState("");
+
+  // State: ID of cart item currently being removed (disables its remove button)
   const [removingId, setRemovingId] = useState(null);
+
+  // State: ID of cart item whose quantity is being updated (disables quantity controls)
   const [updatingId, setUpdatingId] = useState(null);
+
+  // State: Boolean indicating if entire cart is being cleared
   const [clearing, setClearing] = useState(false);
+
+  // State: Boolean indicating if order is being placed
   const [placing, setPlacing] = useState(false);
 
+  /**
+   * Fetch cart data from API and handle various error scenarios
+   */
   const fetchCart = async () => {
+    // Show loading spinner
     setLoading(true);
+
+    // Clear any previous error messages
     setError("");
+
     try {
+      // Call API to get current user's cart
       const res = await getCart();
+
+      // Update cart state with fetched data
       setCart(res.data);
     } catch (err) {
+      // Handle different HTTP error codes appropriately
+
+      // 404: Cart doesn't exist yet - show empty cart state
       if (err.response?.status === 404) {
         setCart({ items: [], totalAmount: 0 });
-      } else if (err.response?.status === 403) {
+      }
+      // 403: Authorization error - user needs to login again
+      else if (err.response?.status === 403) {
         toast.error("Access denied. Please login again.");
         setError("Access denied.");
-      } else if (err.response?.status === 500) {
+      }
+      // 500: Server error - backend problem
+      else if (err.response?.status === 500) {
         toast.error("Server error. Please try again later.");
         setError("Server error.");
-      } else {
+      }
+      // Other errors: Generic failure message
+      else {
         setError("Failed to load cart.");
       }
     } finally {
+      // Always hide loading spinner when done
       setLoading(false);
     }
   };
 
+  // Fetch cart data when component mounts
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, []); // Empty dependency array = run once on mount
 
+  /**
+   * Remove a single item from cart
+   * @param {string} cartItemId - Unique identifier of cart item to remove
+   */
   const handleRemove = async (cartItemId) => {
+    // Set this item as being removed (disables its button)
     setRemovingId(cartItemId);
+
     try {
+      // Call API to remove item from cart
       await removeCartItem(cartItemId);
+
+      // Show success notification
       toast.success("Item removed");
+
+      // Refresh cart to show updated items and total
       await fetchCart();
     } catch {
+      // Show error notification if removal fails
       toast.error("Failed to remove item.");
     } finally {
+      // Clear removing state (re-enables button)
       setRemovingId(null);
     }
   };
 
+  /**
+   * Update quantity of a cart item
+   * @param {string} cartItemId - Unique identifier of cart item
+   * @param {number} newQuantity - New quantity value
+   */
   const handleUpdateQuantity = async (cartItemId, newQuantity) => {
+    // If quantity drops below 1, remove the item instead
     if (newQuantity < 1) {
       handleRemove(cartItemId);
       return;
     }
+
+    // Set this item as being updated (disables quantity controls)
     setUpdatingId(cartItemId);
+
     try {
+      // Call API to update item quantity
       await updateCartItemQuantity(cartItemId, newQuantity);
+
+      // Refresh cart to reflect server-side calculations (subtotals, total)
       await fetchCart();
     } catch {
+      // Show error notification if update fails
       toast.error("Failed to update quantity.");
     } finally {
+      // Clear updating state (re-enables controls)
       setUpdatingId(null);
     }
   };
 
+  /**
+   * Clear all items from cart
+   */
   const handleClear = async () => {
+    // Set clearing state (disables clear button)
     setClearing(true);
+
     try {
+      // Call API to clear entire cart
       await clearCart();
+
+      // Immediately update local state to show empty cart
       setCart({ items: [], totalAmount: 0 });
+
+      // Show success notification
       toast.success("Cart cleared");
     } catch {
       toast.error("Failed to clear cart.");
@@ -93,12 +170,14 @@ const CartPage = () => {
   };
 
   const handlePlaceOrder = async () => {
+    // Place an order for the current cart. On success navigate to orders.
     setPlacing(true);
     setError("");
     try {
       await placeOrder();
       toast.success("Order placed successfully!");
       setCart({ items: [], totalAmount: 0 });
+      // Short delay so user sees the toast, then navigate to orders page.
       setTimeout(() => navigate("/orders"), 1500);
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to place order.";

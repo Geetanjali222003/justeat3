@@ -21,58 +21,105 @@ const CUISINES = [
 ];
 const DIETARY = ["VEG", "NON_VEG", "VEGAN"];
 
+/*
+  Preferences.jsx
+  - Page for customers to set food and restaurant preferences.
+  - Used by the backend to generate personalized recommendations.
+  - Preference types:
+    * Favourite cuisines (multi-select from predefined list)
+    * Dietary restrictions (VEG, NON_VEG, VEGAN)
+    * Favourite restaurants (select from available restaurants)
+    * Favourite foods (select from menu items across restaurants)
+  - On mount, fetches existing preferences and available options.
+  - Saves preferences as arrays of IDs/values to backend.
+*/
+
+/**
+ * Preferences Page Component
+ * Allows customers to configure their food and restaurant preferences.
+ */
 const Preferences = () => {
+  // Hook for programmatic navigation
   const navigate = useNavigate();
+
+  // State: Loading indicator for initial data fetch
   const [loading, setLoading] = useState(true);
+
+  // State: Loading indicator during preference save
   const [saving, setSaving] = useState(false);
 
-  // Changed to arrays to match backend DTO
+  // Preference states (arrays to match backend DTO structure)
+  // State: Selected cuisine types (e.g., INDIAN, CHINESE)
   const [favouriteCuisines, setFavouriteCuisines] = useState([]);
+
+  // State: Selected dietary restrictions (VEG, NON_VEG, VEGAN)
   const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
+
+  // State: Array of favorite restaurant IDs
   const [favouriteRestaurants, setFavouriteRestaurants] = useState([]);
+
+  // State: Array of favorite food item IDs
   const [favouriteFoods, setFavouriteFoods] = useState([]);
 
+  // State: All available restaurants for selection
   const [restaurants, setRestaurants] = useState([]);
+
+  // State: All available food items for selection
   const [foods, setFoods] = useState([]);
 
+  /**
+   * Fetch existing preferences and available options on mount.
+   * Loads:
+   * - User's current preferences (if any exist)
+   * - All available restaurants for selection
+   * - Menu items from first 5 restaurants for food selection
+   * Maps stored objects to IDs for checkbox state management.
+   */
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+
       try {
-        // Fetch preferences
+        // Attempt to fetch user's existing preferences
         try {
           const prefRes = await getPreferences();
           const pref = prefRes.data || {};
+
+          // Set cuisine and dietary preferences (already arrays of strings)
           setFavouriteCuisines(pref.favouriteCuisines || []);
           setDietaryRestrictions(pref.dietaryRestrictions || []);
-          // Map restaurant objects to IDs
+
+          // Map restaurant objects to their IDs for checkbox state
           setFavouriteRestaurants(
-            (pref.favouriteRestaurants || []).map((r) => r.publicId)
+            (pref.favouriteRestaurants || []).map((r) => r.publicId),
           );
-          // Map food objects to IDs
+
+          // Map food objects to their IDs for checkbox state
           setFavouriteFoods((pref.favouriteFoods || []).map((f) => f.id));
         } catch {
-          // No preferences yet
+          // No preferences set yet - continue with empty arrays
         }
 
-        // Fetch restaurants for multi-select
+        // Fetch all restaurants for multi-select dropdown
         const restRes = await getRestaurants();
         setRestaurants(restRes.data || []);
 
-        // Fetch all menu items from all restaurants
+        // Fetch menu items from first 5 restaurants to populate food choices
         const allFoods = [];
         for (const r of (restRes.data || []).slice(0, 5)) {
           try {
             const menuRes = await getMenu(r.publicId);
+            // Add restaurant context to each food item
             (menuRes.data || []).forEach((item) => {
               allFoods.push({
                 ...item,
-                restaurantName: r.name,
-                restaurantId: r.publicId,
+                restaurantName: r.name, // Add restaurant name for display
+                restaurantId: r.publicId, // Add restaurant ID for reference
               });
             });
           } catch {
-            // ignore
+            // Silently ignore if a restaurant's menu fails to load
+            // Continue fetching other menus
           }
         }
         setFoods(allFoods);
@@ -89,7 +136,7 @@ const Preferences = () => {
     setFavouriteCuisines((prev) =>
       prev.includes(cuisine)
         ? prev.filter((c) => c !== cuisine)
-        : [...prev, cuisine]
+        : [...prev, cuisine],
     );
   };
 
@@ -97,7 +144,7 @@ const Preferences = () => {
     setDietaryRestrictions((prev) =>
       prev.includes(dietary)
         ? prev.filter((d) => d !== dietary)
-        : [...prev, dietary]
+        : [...prev, dietary],
     );
   };
 
@@ -173,7 +220,10 @@ const Preferences = () => {
                         checked={favouriteCuisines.includes(c)}
                         onChange={() => handleCuisineToggle(c)}
                       />
-                      <label className="form-check-label" htmlFor={`cuisine-${c}`}>
+                      <label
+                        className="form-check-label"
+                        htmlFor={`cuisine-${c}`}
+                      >
                         {c.replace(/_/g, " ")}
                       </label>
                     </div>
@@ -196,7 +246,10 @@ const Preferences = () => {
                         checked={dietaryRestrictions.includes(d)}
                         onChange={() => handleDietaryToggle(d)}
                       />
-                      <label className="form-check-label" htmlFor={`dietary-${d}`}>
+                      <label
+                        className="form-check-label"
+                        htmlFor={`dietary-${d}`}
+                      >
                         {d.replace(/_/g, " ")}
                       </label>
                     </div>

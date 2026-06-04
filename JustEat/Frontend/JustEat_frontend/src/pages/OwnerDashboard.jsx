@@ -8,82 +8,161 @@ import {
   deleteRestaurant,
 } from "../api/restaurantApi";
 
-// Owner dashboard page: lists restaurants owned by current user
-// Allows search and quick navigation to manage each restaurant
+/*
+  OwnerDashboard.jsx
+  - Main dashboard for restaurant owners to view and manage their restaurants.
+  - Features:
+    * List all restaurants owned by the current user
+    * Search restaurants by keyword with debouncing
+    * Quick navigation to manage each restaurant
+    * Delete restaurants with confirmation modal
+  - Uses restaurantApi for all data operations.
+*/
+
+/**
+ * Owner Dashboard Page Component
+ * Lists all restaurants owned by the authenticated owner.
+ */
 const OwnerDashboard = () => {
+  // Hook for programmatic navigation
   const navigate = useNavigate();
+
+  // State: Array of restaurant objects owned by this user
   const [restaurants, setRestaurants] = useState([]);
+
+  // State: Loading indicator for initial page load
   const [loading, setLoading] = useState(true);
+
+  // State: Error message to display if operations fail
   const [error, setError] = useState("");
+
+  // State: Current search input value
   const [searchTerm, setSearchTerm] = useState("");
+
+  // State: Timeout ID for debouncing search (prevents API spam)
   const [searchTimeout, setSearchTimeout] = useState(null);
+
+  // State: ID of restaurant currently being deleted
   const [deletingId, setDeletingId] = useState(null);
+
+  // State: ID of restaurant awaiting delete confirmation
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
+  /**
+   * Fetch restaurants with optional keyword search
+   * Wrapped in useCallback to prevent unnecessary re-renders
+   * @param {string} keyword - Optional search term to filter restaurants
+   */
   const fetchRestaurants = useCallback(async (keyword = "") => {
+    // Show loading spinner
     setLoading(true);
+
+    // Clear previous errors
     setError("");
+
     try {
       let res;
+
+      // Use search endpoint if keyword provided, otherwise get all
       if (keyword.trim()) {
         res = await searchOwnerRestaurants(keyword);
       } else {
         res = await getMyRestaurants();
       }
-      // Debug: Log API response
+
+      // Debug log to help troubleshoot API issues
       console.log("API response:", res.data);
+
+      // Update state with fetched restaurants
       setRestaurants(res.data || []);
     } catch (err) {
-      // Debug: Log full error response
+      // Debug log to see full error details
       console.log("API Error:", err.response);
 
-      // Handle 500 server error specifically
+      // Handle specific HTTP error codes
       if (err.response?.status === 500) {
+        // 500: Server error - backend problem
         const msg = "Server error. Please try again later.";
         setError(msg);
         toast.error(msg);
       } else {
+        // Other errors: Extract message from API or use fallback
         const msg =
           err.response?.data?.message || "Failed to load restaurant data";
         setError(msg);
         toast.error(msg);
       }
     } finally {
+      // Always hide loading spinner when done
       setLoading(false);
     }
-  }, []);
+  }, []); // Empty deps = function doesn't change
 
+  // Fetch restaurants when component mounts
   useEffect(() => {
     fetchRestaurants();
-  }, [fetchRestaurants]);
+  }, [fetchRestaurants]); // Re-run if fetchRestaurants changes
 
-  // Debounced search
+  /**
+   * Handle search input with debouncing
+   * Waits 500ms after user stops typing before searching
+   * @param {string} value - Search input value
+   */
   const handleSearch = (value) => {
+    // Update search term immediately for UI
     setSearchTerm(value);
+
+    // Clear any existing timeout to reset debounce timer
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
+
+    // Set new timeout to fetch after 500ms of no typing
     const timeout = setTimeout(() => {
       fetchRestaurants(value);
     }, 500);
+
+    // Store timeout ID for cleanup
     setSearchTimeout(timeout);
   };
 
+  /**
+   * Delete a restaurant after confirmation
+   * @param {string} publicId - Restaurant's unique identifier
+   * @param {string} name - Restaurant name (for success message)
+   */
   const handleDelete = async (publicId, name) => {
+    // Set this restaurant as being deleted (shows loading)
     setDeletingId(publicId);
+
     try {
+      // Call API to delete restaurant
       await deleteRestaurant(publicId);
+
+      // Remove from local state immediately (optimistic update)
       setRestaurants((prev) => prev.filter((r) => r.publicId !== publicId));
+
+      // Show success notification with restaurant name
       toast.success(`${name} deleted successfully!`);
+
+      // Close confirmation modal
       setConfirmDeleteId(null);
     } catch (err) {
+      // Show error notification if deletion fails
       toast.error(err.response?.data?.message || "Failed to delete restaurant");
     } finally {
+      // Clear deleting state
       setDeletingId(null);
     }
   };
 
+  /**
+   * Map restaurant status to Bootstrap badge color class
+   * @param {string} status - Restaurant status (OPEN, CLOSED, etc.)
+   * @returns {string} Bootstrap class name for badge styling
+   */
   const getStatusBadge = (status) => {
+    // Normalize status to uppercase, default to OPEN if not set
     const s = (status || "OPEN").toUpperCase();
     if (s === "OPEN") return "bg-success";
     if (s === "CLOSED") return "bg-danger";

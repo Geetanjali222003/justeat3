@@ -3,6 +3,23 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getOrderById } from "../api/orderApi";
 
+/*
+  OrderDetailsPage.jsx
+  - Displays detailed information about a single order.
+  - Shows:
+    * Restaurant name and order ID
+    * Order status with color-coded badge
+    * Creation timestamp (formatted)
+    * Complete list of items with quantities and prices
+    * Total amount
+  - Uses order public ID from URL params to fetch specific order data.
+*/
+
+/**
+ * Helper function to map order status to Bootstrap badge class.
+ * @param {string} status - Order status (PENDING, CONFIRMED, PREPARING, etc.)
+ * @returns {string} Bootstrap badge class
+ */
 const getStatusBadge = (status) => {
   const map = {
     PENDING: "bg-warning text-dark",
@@ -15,6 +32,10 @@ const getStatusBadge = (status) => {
   return map[status] || "bg-secondary";
 };
 
+/**
+ * OrderDetailsPage Component
+ * Shows complete details of a single order identified by publicId.
+ */
 const OrderDetailsPage = () => {
   const { publicId } = useParams();
   const navigate = useNavigate();

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getProfile } from "../api/profileApi";
 
+// Reusable inline style for nav links to keep visual consistency.
 const navLinkStyle = {
   color: "var(--text-dark)",
   fontWeight: "500",
@@ -15,11 +16,15 @@ const navLinkStyle = {
   alignItems: "center",
   gap: "6px",
 };
-
-// Top navigation bar component
-// Shows logo, navigation links and user profile dropdown
-// - Uses `useAuth` to determine role and conditionally render links
-// - Fetches current user's profile for the avatar / initials
+/*
+  Navbar
+  - Top navigation bar component used across the app.
+  - Responsibilities:
+    * display brand logo and primary navigation
+    * render owner/customer specific links based on role from `useAuth`
+    * fetch the current user's profile to show avatar/initials
+    * provide a profile dropdown with profile & logout actions
+*/
 const Navbar = () => {
   const { logout, role } = useAuth();
   const navigate = useNavigate();
@@ -28,18 +33,23 @@ const Navbar = () => {
   const [profile, setProfile] = useState(null);
   const dropdownRef = useRef(null);
 
+  // Fetch the current user's profile once on mount so the avatar/initials
+  // and email/name can be displayed in the navbar dropdown.
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await getProfile();
         setProfile(res.data);
       } catch (err) {
+        // Log the error; don't block app rendering if profile fetch fails.
         console.error("Failed to fetch profile:", err);
       }
     };
     fetchProfile();
   }, []);
 
+  // Close the dropdown when clicking outside of it. We attach a document
+  // listener and clean it up on unmount to avoid memory leaks.
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -50,13 +60,15 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Perform local logout (clears storage) then navigate to login page.
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  // Derive initials from the fetched profile for the avatar fallback.
   const getInitials = () => {
-    if (!profile) return "U";
+    if (!profile) return "U"; // U = Unknown
     return `${profile.firstName?.[0] || ""}${profile.lastName?.[0] || ""}`.toUpperCase();
   };
 

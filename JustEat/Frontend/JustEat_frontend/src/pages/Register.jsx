@@ -2,11 +2,24 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register as registerService, sendOtp } from "../auth/authService";
 
-// Register page
-// - Handles account creation with OTP verification
-// - Supports role selection (Customer / Owner) and profile fields
+/*
+  Register.jsx
+  - Handles new user account creation with OTP verification.
+  - Two-step process:
+    1. User fills in details and requests OTP to be sent to their email
+    2. After OTP is received, user enters it and submits to complete registration
+  - Supports role selection (CUSTOMER or OWNER) which affects post-registration redirect
+  - All form fields are controlled components with validation (phone pattern, password min length)
+*/
+
+/**
+ * Register Page Component
+ * Manages account creation with OTP verification for email confirmation.
+ */
 const Register = () => {
   const navigate = useNavigate();
+
+  // Form state for all registration fields
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -18,15 +31,22 @@ const Register = () => {
     role: "CUSTOMER",
     otp: "",
   });
+
+  // UI state for feedback and loading
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
 
+  // Generic change handler for all controlled inputs
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  /**
+   * Send OTP to user's email for verification.
+   * Validates email presence before making API call.
+   */
   const handleSendOtp = async () => {
     if (!form.email) {
       setError("Please enter your email address");
@@ -46,8 +66,14 @@ const Register = () => {
     }
   };
 
+  /**
+   * Submit registration form after OTP verification.
+   * Validates that OTP was sent and entered before calling register API.
+   * On success, redirects to login (with owner dashboard hint for owners).
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Ensure OTP flow was completed
     if (!otpSent) {
       setError("Please send and verify OTP first");
       return;
@@ -62,6 +88,7 @@ const Register = () => {
     try {
       await registerService(form);
       setSuccess("Registration successful! Redirecting to login...");
+      // Brief delay to show success message, then redirect with role-based hint
       setTimeout(() => {
         navigate(
           form.role === "OWNER" ? "/login?next=owner-dashboard" : "/login",

@@ -2,22 +2,41 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { sendResetOtp, resetPassword } from "../auth/authService";
 
+/*
+  ForgotPassword.jsx
+  - Handles the 'forgot password' flow using an email + OTP verification.
+  - Steps:
+    1. User supplies email and requests an OTP (sendResetOtp).
+    2. After OTP is sent, user enters OTP + new password and submits (resetPassword).
+  - The component keeps UI state for loading, success/error messages and whether
+    an OTP has been sent so the form can reveal OTP/password inputs.
+*/
+
 const ForgotPassword = () => {
   const navigate = useNavigate();
+
+  // Form fields: email, otp, new password
   const [form, setForm] = useState({
     email: "",
     otp: "",
     newPassword: "",
   });
+
+  // UI state for messages and loading indicators
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Track whether an OTP has been sent and whether that request is in progress
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
 
+  // Generic change handler for controlled inputs
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  // Send a reset OTP to the provided email. Basic client-side validation
+  // prevents calling the API without an email.
   const handleSendOtp = async () => {
     if (!form.email) {
       setError("Please enter your email address");
@@ -37,6 +56,8 @@ const ForgotPassword = () => {
     }
   };
 
+  // Submit the OTP + new password to reset the user's password. Ensures
+  // OTP was requested and basic fields are populated before calling API.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!otpSent) {
@@ -57,6 +78,7 @@ const ForgotPassword = () => {
         newPassword: form.newPassword,
       });
       setSuccess("Password reset successful! Redirecting to login...");
+      // Short delay to show success message then navigate to login
       setTimeout(() => {
         navigate("/login");
       }, 2000);
@@ -74,7 +96,7 @@ const ForgotPassword = () => {
     <div className="auth-container">
       <div style={{ width: "100%", maxWidth: "400px" }}>
         <div className="auth-card p-4 p-md-5">
-          {/* Brand */}
+          {/* Brand header */}
           <div className="text-center mb-4">
             <div className="brand-logo mb-2">
               <span className="orange">Just</span>
@@ -87,14 +109,14 @@ const ForgotPassword = () => {
             </p>
           </div>
 
-          {/* Alerts */}
+          {/* Alert messages */}
           {error && <div className="alert-swiggy-error mb-3">{error}</div>}
           {success && (
             <div className="alert-swiggy-success mb-3">{success}</div>
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Email with OTP */}
+            {/* Email input with a Send OTP button */}
             <div className="mb-3">
               <label className="form-label">Email</label>
               <div className="input-group">
@@ -119,7 +141,7 @@ const ForgotPassword = () => {
               </div>
             </div>
 
-            {/* OTP and New Password */}
+            {/* When OTP is sent reveal OTP and new password inputs */}
             {otpSent && (
               <>
                 <div className="mb-3">
@@ -157,7 +179,7 @@ const ForgotPassword = () => {
               </>
             )}
 
-            {/* Submit Button */}
+            {/* Submit button becomes enabled after OTP is sent */}
             <button
               type="submit"
               className="btn btn-orange w-100 mb-4"
@@ -166,12 +188,11 @@ const ForgotPassword = () => {
               {loading ? "Resetting..." : "Reset Password"}
             </button>
 
-            {/* Divider */}
+            {/* Divider and link back to login */}
             <div className="auth-divider">
               <span>or</span>
             </div>
 
-            {/* Back to Login */}
             <p
               className="text-center mb-0"
               style={{ color: "var(--text-gray)", fontSize: "14px" }}

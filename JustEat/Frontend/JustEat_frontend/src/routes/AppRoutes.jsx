@@ -15,7 +15,20 @@ import Preferences from "../pages/Preferences";
 import PrivateRoute from "../components/PrivateRoute";
 import { useAuth } from "../context/AuthContext";
 
-// Small helper: decide whether to show Home (customer) or Owner dashboard
+/*
+  AppRoutes.jsx
+  - Central routing configuration for the entire application.
+  - Defines all routes, both public (login, register, forgot-password) and
+    protected (wrapped in PrivateRoute).
+  - Uses role-based routing: OWNER sees owner dashboard, CUSTOMER sees home.
+  - All authenticated routes require user to be logged in via PrivateRoute.
+  - Catch-all route redirects unknown paths to home.
+*/
+
+/**
+ * Helper component that redirects based on user role.
+ * Owners are sent to /owner-dashboard, customers see the Home page.
+ */
 const HomeOrDashboard = () => {
   const { role } = useAuth();
   return role === "OWNER" ? (

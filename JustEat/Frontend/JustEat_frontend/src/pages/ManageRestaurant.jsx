@@ -11,6 +11,20 @@ import {
 import { markAsSpecial, markAsDeal } from "../api/restaurantApi";
 import api from "../api/axiosConfig";
 
+/*
+  ManageRestaurant.jsx
+  - Owner management page for a specific restaurant.
+  - Features:
+    * View and manage restaurant menu items
+    * Add new menu items (with image, dietary info, cuisine type, pricing)
+    * Edit existing menu items
+    * Delete menu items with confirmation
+    * Toggle 'isAvailable' status for menu items
+    * Mark items as special or deal of the day
+  - Uses menuApi and restaurantApi for all CRUD operations.
+  - Inline MenuItemForm component handles add/edit form UI.
+*/
+
 const CUISINE_TYPES = [
   "INDIAN",
   "CHINESE",
@@ -31,6 +45,16 @@ const EMPTY_FORM = {
   isSpecial: false,
 };
 
+/**
+ * MenuItemForm Component
+ * Reusable form for adding or editing menu items.
+ * @param {Object} initial - Initial form values (for edit mode)
+ * @param {Function} onSubmit - Callback when form is submitted
+ * @param {boolean} submitting - Loading state to disable submit button
+ * @param {string} error - Error message to display
+ * @param {Function} onCancel - Callback to cancel and close form
+ * @param {boolean} isEdit - True if editing existing item, false if adding new
+ */
 const MenuItemForm = ({
   initial,
   onSubmit,
@@ -39,11 +63,19 @@ const MenuItemForm = ({
   onCancel,
   isEdit,
 }) => {
+  // Local form state initialized with passed values
   const [form, setForm] = useState(initial);
+
+  // Selected image file for upload
   const [imageFile, setImageFile] = useState(null);
 
+  /**
+   * Generic change handler for all form inputs
+   * Handles both regular inputs and checkboxes
+   */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    // For checkboxes use 'checked', for others use 'value'
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 

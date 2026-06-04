@@ -12,6 +12,9 @@ import api from "./axiosConfig";
  * @param {string} menuItemId - ID of the menu item to add
  * @param {number} quantity - quantity to add
  * @returns {Promise} axios response promise
+ * 
+ * 
+
  */
 export const addToCart = (menuItemId, quantity) =>
   api.post("/cart/add", { menuItemId, quantity });

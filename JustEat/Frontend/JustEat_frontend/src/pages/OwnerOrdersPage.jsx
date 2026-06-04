@@ -4,68 +4,144 @@ import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import { getOwnerOrders, updateOrderStatus } from "../api/orderApi";
 
+/*
+  OwnerOrdersPage.jsx
+  - Displays all orders for restaurants owned by the current owner.
+  - Features:
+    * Real-time order list with auto-refresh every 5 seconds
+    * Shows customer info (name, email), order items, and total amount
+    * Dropdown to update order status (PENDING, PREPARING, READY, COMPLETED)
+    * Live indicator badge to show data is being refreshed
+  - Uses polling mechanism (setInterval) to keep order data current.
+*/
+
+// Available status options for order progression
 const STATUS_OPTIONS = ["PENDING", "PREPARING", "READY", "COMPLETED"];
 
+/**
+ * OwnerOrdersPage Component
+ * Lists and manages orders for owner's restaurants with real-time updates.
+ */
 const OwnerOrdersPage = () => {
+  // Hook for programmatic navigation between pages
   const navigate = useNavigate();
+
+  // State: Array of order objects fetched from API
   const [orders, setOrders] = useState([]);
+
+  // State: Loading indicator for initial page load
   const [loading, setLoading] = useState(true);
+
+  // State: Error message to display if API fails
   const [error, setError] = useState("");
+
+  // State: Tracks which order is currently being updated (for disabling dropdown)
   const [updatingId, setUpdatingId] = useState(null);
+
+  // Ref: Stores interval ID for polling cleanup on unmount
   const intervalRef = useRef(null);
 
+  /**
+   * Fetch orders from API with optional loading indicator
+   * @param {boolean} showLoading - If true, displays loading spinner
+   */
   const fetchOrders = async (showLoading = false) => {
+    // Only show loading spinner on initial load, not during polling refreshes
     if (showLoading) setLoading(true);
+
     try {
+      // Call API to get all orders for this owner's restaurants
       const res = await getOwnerOrders();
+
+      // Update state with fetched orders (empty array if no data)
       setOrders(res.data || []);
+
+      // Clear any previous error messages on success
       setError("");
     } catch (err) {
+      // Handle 404 as empty state (no orders yet), not an error
       if (err.response?.status === 404) {
         setOrders([]);
       } else {
+        // For other errors, set error message for UI display
         setError("Failed to load orders.");
       }
     } finally {
+      // Hide loading spinner only if we showed it for this request
       if (showLoading) setLoading(false);
     }
   };
 
+  /**
+   * Setup polling on component mount, cleanup on unmount
+   * Effect runs once due to empty dependency array
+   */
   useEffect(() => {
+    // Initial fetch with loading spinner
     fetchOrders(true);
+
+    // Set up interval to refresh orders every 5 seconds (silent refresh)
     intervalRef.current = setInterval(() => {
-      fetchOrders(false);
+      fetchOrders(false); // No loading spinner for polling updates
     }, 5000);
+
+    // Cleanup function: clear interval when component unmounts
+    // Prevents memory leaks and unnecessary API calls
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, []);
+  }, []); // Empty array = run once on mount
 
+  /**
+   * Handle order status update from dropdown selection
+   * @param {string} publicId - Unique order identifier
+   * @param {string} newStatus - New status selected from dropdown
+   */
   const handleStatusChange = async (publicId, newStatus) => {
+    // Set this order as updating (disables its dropdown)
     setUpdatingId(publicId);
+
+    // Clear previous errors
     setError("");
+
     try {
+      // Call API to update order status
       await updateOrderStatus(publicId, newStatus);
+
+      // Show success notification
       toast.success("Status updated!");
+
+      // Refresh orders list to show updated status (silent refresh)
       await fetchOrders(false);
     } catch (err) {
+      // Extract error message from API response or use fallback
       const msg = err.response?.data?.message || "Failed to update status";
+
+      // Display error in both UI and toast notification
       setError(msg);
       toast.error(msg);
     } finally {
+      // Clear updating state (re-enables dropdown)
       setUpdatingId(null);
     }
   };
 
+  /**
+   * Map order status to Bootstrap badge color class
+   * @param {string} status - Order status (PENDING, PREPARING, etc.)
+   * @returns {string} Bootstrap class name for badge styling
+   */
   const getStatusBadge = (status) => {
+    // Define color mapping for each status
     const map = {
-      PENDING: "bg-warning",
-      PREPARING: "bg-info",
-      READY: "bg-primary",
-      COMPLETED: "bg-success",
+      PENDING: "bg-warning", // Yellow for pending orders
+      PREPARING: "bg-info", // Blue for orders being prepared
+      READY: "bg-primary", // Primary blue for ready orders
+      COMPLETED: "bg-success", // Green for completed orders
     };
+    // Return mapped color or gray for unknown statuses
     return map[status] || "bg-secondary";
   };
 

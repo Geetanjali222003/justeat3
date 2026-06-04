@@ -1,5 +1,16 @@
-// Small presentational component used inside the Cart page
-// Displays a cart item, its quantity and price, and a remove button
+/*
+  CartItemCard.jsx
+  - Presentational component used inside CartPage to display a single cart item.
+  - Shows item name, price, quantity, total, and a remove button.
+  - Delegates removal logic to parent via onRemove callback.
+*/
+
+/**
+ * CartItemCard Component
+ * @param {Object} item - Cart item object { id, menuItem, price, quantity }
+ * @param {Function} onRemove - Callback to remove item (receives item.id)
+ * @param {boolean} removing - Loading state to disable the remove button
+ */
 const CartItemCard = ({ item, onRemove, removing }) => {
   return (
     <div className="card border-0 shadow-sm p-3 mb-3">

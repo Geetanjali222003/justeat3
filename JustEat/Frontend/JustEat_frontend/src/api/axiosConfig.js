@@ -11,7 +11,7 @@ import axios from "axios";
     * surface common response handling (e.g. 401 -> redirect to login)
 */
 const api = axios.create({
-  baseURL: "https://justeat-dyfmc5h3f0gphpch.eastasia-01.azurewebsites.net",
+  baseURL: "http://98.92.13.239:8090",
   headers: {
     "Content-Type": "application/json",
   },
@@ -32,8 +32,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // If the server returns 401 and we don't have a token saved,
-    // send the user to the login page. In other cases you could add
-    // refresh-token handling or more advanced error UX here.
+    // send the user to the login page.
     if (error.response?.status === 401) {
       const token = localStorage.getItem("token");
       if (!token) {

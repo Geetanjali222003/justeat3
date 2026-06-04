@@ -19,6 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Implementation of authentication service handling user registration, login, and password reset.
+ * Uses OTP verification for secure registration and password reset flows.
+ * Passwords are hashed with BCrypt before storage.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -31,6 +36,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void sendOtp(SendOtpRequest request) {
         String email = request.getEmail();
+        // Prevent OTP send for already registered emails
         if (userRepository.existsByEmail(email)) {
             throw new BadRequestException("Email already registered");
         }
@@ -40,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void register(RegisterRequest req) {
-        // Verify OTP first
+        // Verify OTP before allowing registration
         if (!otpService.verifyOtp(req.getEmail(), req.getOtp())) {
             throw new BadRequestException("Invalid OTP");
         }
@@ -49,11 +55,14 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Email already exists");
         }
         
+        // Create new user with hashed password
         User user = new User();
         user.setEmail(req.getEmail());
         user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
+
+        // Validate role (only CUSTOMER and OWNER allowed for self-registration)
         if (req.getRole() != Role.CUSTOMER && req.getRole() != Role.OWNER) {
             throw new BadRequestException("Invalid role selection");
         }
@@ -63,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPhoneNumber(req.getPhoneNumber());
         userRepository.save(user);
         
-        // Delete OTP after successful registration
+        // Clean up OTP after successful registration
         otpService.deleteOtp(req.getEmail());
         log.info("User registered successfully: {}", req.getEmail());
     }
@@ -73,9 +82,12 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
 
+        // Verify password using BCrypt
         if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Invalid credentials");
         }
+
+        // Generate JWT token for authenticated user
         String token = jwtUtil.generateToken(user.getPublicId(), user.getRole().name());
         return AuthResponse.builder()
                 .token(token)
@@ -88,6 +100,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void sendResetOtp(SendOtpRequest request) {
         String email = request.getEmail();
+        // Only send reset OTP for existing users
         if (!userRepository.existsByEmail(email)) {
             throw new NotFoundException("Email not found");
         }
@@ -97,7 +110,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void resetPassword(ResetPasswordWithOtpRequest request) {
-        // Verify OTP
+        // Verify OTP before allowing password reset
         if (!otpService.verifyOtp(request.getEmail(), request.getOtp())) {
             throw new BadRequestException("Invalid OTP");
         }
@@ -105,10 +118,11 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
+        // Update password with new hashed value
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
         
-        // Delete OTP after successful password reset
+        // Clean up OTP after successful password reset
         otpService.deleteOtp(request.getEmail());
         log.info("Password reset successfully for: {}", request.getEmail());
     }

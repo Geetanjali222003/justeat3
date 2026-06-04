@@ -2,11 +2,31 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
-import { getRestaurant, getOwnerRestaurant, submitRating } from "../api/restaurantApi";
+import {
+  getRestaurant,
+  getOwnerRestaurant,
+  submitRating,
+} from "../api/restaurantApi";
 import { getMenu, getOwnerMenu } from "../api/menuApi";
 import { addToCart } from "../api/cartApi";
 import { useAuth } from "../context/AuthContext";
 
+/*
+  RestaurantDetail.jsx
+  - Displays detailed information about a specific restaurant and its menu.
+  - Features:
+    * Shows restaurant name, description, image, location, cuisine types, status
+    * Displays average rating and rating count
+    * Lists all menu items with dietary indicators
+    * CUSTOMER role: can add items to cart and submit ratings
+    * OWNER role: can only view (no cart/rating actions)
+  - Uses role-based API endpoints (owner vs customer) for data fetching.
+*/
+
+/**
+ * RestaurantDetail Page Component
+ * Displays restaurant information and menu with role-specific actions.
+ */
 const RestaurantDetail = () => {
   const { publicId } = useParams();
   const navigate = useNavigate();

@@ -12,6 +12,12 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Implementation of OTP service using in-memory storage (ConcurrentHashMap).
+ * Generates and sends 6-digit OTPs via email, validates them, and automatically cleans up expired entries.
+ * Note: In-memory storage is suitable for single-instance deployments. For multi-instance/production,
+ * consider using Redis or another distributed cache.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -19,23 +25,26 @@ public class OtpServiceImpl implements OtpService {
 
     private static final String OTP_PREFIX = "OTP:";
     private static final int OTP_LENGTH = 6;
-    private static final long OTP_EXPIRY_MINUTES = 5;
+    private static final long OTP_EXPIRY_MINUTES = 5; // OTPs expire after 5 minutes
 
     private final EmailService emailService;
 
-    // In-memory OTP storage: key -> OtpEntry(otp, expiryTime)
+    // In-memory OTP storage: maps email -> OTP entry (OTP value + expiry timestamp)
+    // Thread-safe for concurrent access
     private final Map<String, OtpEntry> otpStore = new ConcurrentHashMap<>();
 
     @Override
     public void sendOtp(String email) {
+        // Generate a random 6-digit OTP
         String otp = generateOtp();
         String key = OTP_PREFIX + email;
         
-        // Store OTP with expiry time
+        // Store OTP with its expiry time (current time + 5 minutes)
         Instant expiryTime = Instant.now().plusSeconds(OTP_EXPIRY_MINUTES * 60);
         otpStore.put(key, new OtpEntry(otp, expiryTime));
         log.info("OTP generated for {}", email);
         
+        // Send OTP via email
         emailService.sendEmail(email, "Your OTP Code - JustEat", 
                 "Your OTP is: " + otp + "\n\nThis OTP is valid for " + OTP_EXPIRY_MINUTES + " minutes.");
     }
@@ -50,13 +59,14 @@ public class OtpServiceImpl implements OtpService {
             return false;
         }
         
-        // Check if expired
+        // Check if OTP has expired
         if (Instant.now().isAfter(entry.expiryTime())) {
             log.warn("OTP expired for email: {}", email);
             otpStore.remove(key);
             return false;
         }
         
+        // Verify OTP matches
         boolean isValid = entry.otp().equals(otp);
         log.info("OTP verification for {}: {}", email, isValid ? "SUCCESS" : "FAILED");
         return isValid;
@@ -69,6 +79,7 @@ public class OtpServiceImpl implements OtpService {
         log.info("OTP deleted for {}", email);
     }
 
+    // Generate a random 6-digit numeric OTP using SecureRandom
     private String generateOtp() {
         SecureRandom random = new SecureRandom();
         StringBuilder otp = new StringBuilder();
@@ -78,13 +89,14 @@ public class OtpServiceImpl implements OtpService {
         return otp.toString();
     }
 
-    // Cleanup expired OTPs every minute
+    // Scheduled task that runs every minute to remove expired OTPs from memory
+    // Prevents memory leaks from abandoned/expired OTPs
     @Scheduled(fixedRate = 60000)
     public void cleanupExpiredOtps() {
         Instant now = Instant.now();
         otpStore.entrySet().removeIf(entry -> now.isAfter(entry.getValue().expiryTime()));
     }
 
-    // Simple record to hold OTP and its expiry time
+    // Immutable record holding OTP value and its expiry timestamp
     private record OtpEntry(String otp, Instant expiryTime) {}
 }

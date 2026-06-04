@@ -3,9 +3,21 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 
-// Login page
-// - Handles sign-in form submission
-// - Uses `login` from AuthContext and redirects based on role
+/*
+  Login.jsx
+  - Handles user authentication with email and password.
+  - Uses `login` method from AuthContext which persists token/role/userId.
+  - Implements role-based redirection:
+    * OWNER -> /owner-dashboard
+    * CUSTOMER -> /home (root)
+  - Supports "next" query parameter for redirect after login.
+  - Displays error messages for failed login attempts.
+*/
+
+/**
+ * Login Page Component
+ * Authenticates users and redirects based on their role.
+ */
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();

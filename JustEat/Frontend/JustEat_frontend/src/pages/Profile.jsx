@@ -21,9 +21,20 @@ const LOCATIONS = [
 
 const GENDERS = ["MALE", "FEMALE", "OTHER"];
 
-// Profile page
-// - Shows user profile information and allows editing
-// - Supports changing profile picture with validation
+/*
+  Profile.jsx
+  - User profile page for viewing and editing account information.
+  - Features:
+    * Display and update profile fields (name, phone, gender, location)
+    * Upload/update profile picture with validation (file type, max 5MB)
+    * Shows profile image or initials fallback
+  - All API calls use profileApi helpers which return axios promises.
+*/
+
+/**
+ * Profile Page Component
+ * Allows users to view and update their profile information and picture.
+ */
 const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);

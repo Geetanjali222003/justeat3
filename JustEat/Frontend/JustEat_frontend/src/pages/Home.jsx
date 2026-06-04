@@ -12,32 +12,46 @@ import {
 import { addToCart } from "../api/cartApi";
 import { useAuth } from "../context/AuthContext";
 
+/*
+  Home.jsx
+  - Customer-facing home page that lists nearby restaurants, allows searching
+  - Also shows sections for Most Ordered, Today's Specials and personalized
+    Recommendations (when `role` is CUSTOMER and `userId` is available).
+  - All data loading uses the thin `restaurantApi` wrappers which return
+    axios promises; UI shows loading states and errors accordingly.
+*/
+
 const LOCATIONS = ["ALL", "NOIDA", "DELHI", "GURGAON"];
 
-// Home page for customers: shows restaurants, specials, most ordered items
-// and personalized recommendations when available
 const Home = () => {
+  // Auth/context values used to conditionally show customer-only sections
   const { userLocation, role, userId } = useAuth();
+
+  // Restaurants listing state
   const [restaurants, setRestaurants] = useState([]);
   const [location, setLocation] = useState(userLocation || "ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Search state (debounced)
   const [searchTerm, setSearchTerm] = useState("");
   const [searchTimeout, setSearchTimeout] = useState(null);
 
-  // Most Ordered
+  // Most ordered state (customer-specific)
   const [mostOrdered, setMostOrdered] = useState([]);
   const [mostOrderedLoading, setMostOrderedLoading] = useState(true);
-  const [addingItemId, setAddingItemId] = useState(null);
+  const [addingItemId, setAddingItemId] = useState(null); // disables add button per-item
 
-  // Specials
+  // Specials state (customer-specific)
   const [specials, setSpecials] = useState([]);
   const [specialsLoading, setSpecialsLoading] = useState(true);
 
-  // Recommendations
+  // Personalized recommendations (customer-specific)
   const [recommendations, setRecommendations] = useState([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
 
+  // Fetch restaurants with optional keyword search. Uses `loc === "ALL"` to
+  // request unfiltered results. Error handling surfaces a toast.
   const fetchRestaurants = useCallback(async (loc, keyword = "") => {
     setLoading(true);
     setError("");
@@ -58,11 +72,12 @@ const Home = () => {
     }
   }, []);
 
+  // Load restaurants whenever location changes or on initial mount.
   useEffect(() => {
     fetchRestaurants(location, searchTerm);
   }, [location, fetchRestaurants]);
 
-  // Debounced search
+  // Debounced search handler to avoid firing API on every keystroke.
   const handleSearch = (value) => {
     setSearchTerm(value);
     if (searchTimeout) {
@@ -74,6 +89,7 @@ const Home = () => {
     setSearchTimeout(timeout);
   };
 
+  // Load customer-specific sections when the user is a customer.
   useEffect(() => {
     if (role === "CUSTOMER") {
       // Most Ordered
@@ -90,7 +106,7 @@ const Home = () => {
         .catch(() => setSpecials([]))
         .finally(() => setSpecialsLoading(false));
 
-      // Recommendations
+      // Recommendations (requires userId)
       if (userId) {
         setRecommendationsLoading(true);
         getRecommendations(userId)
@@ -103,6 +119,7 @@ const Home = () => {
     }
   }, [role, userId]);
 
+  // Add a menu item to cart (quantity=1). Shows per-item loading state.
   const handleAddToCart = async (menuItemId) => {
     setAddingItemId(menuItemId);
     try {
@@ -115,6 +132,7 @@ const Home = () => {
     }
   };
 
+  // Helper to map restaurant status to badge class
   const getStatusBadge = (status) => {
     const s = (status || "OPEN").toUpperCase();
     if (s === "OPEN") return "bg-success";
@@ -166,7 +184,7 @@ const Home = () => {
           ))}
         </div>
 
-        {/* Loading */}
+        {/* Loading state for restaurant list */}
         {loading && (
           <div className="text-center py-5">
             <div className="spinner-border text-warning" role="status">
@@ -175,14 +193,14 @@ const Home = () => {
           </div>
         )}
 
-        {/* Error */}
+        {/* Error message */}
         {error && (
           <div className="alert alert-danger" role="alert">
             {error}
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty State when no restaurants match */}
         {!loading && !error && restaurants.length === 0 && (
           <div className="text-center py-5">
             <div style={{ fontSize: "4rem" }}>🍽️</div>
