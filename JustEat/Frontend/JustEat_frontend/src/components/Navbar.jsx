@@ -101,7 +101,7 @@ const Navbar = () => {
               className="fs-3 fw-bold"
               style={{ color: "var(--primary-orange)" }}
             >
-              🍕 JustEatApp
+              🍕 JustEat
             </span>
           </div>
         </Link>
